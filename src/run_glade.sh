@@ -1,0 +1,2 @@
+#!/bin/sh
+GLADE_CATALOG_SEARCH_PATH=. LD_LIBRARY_PATH=.libs glade $1
