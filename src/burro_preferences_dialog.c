@@ -3,7 +3,7 @@
 #include "burro_app.h"
 #include "burro_app_win.h"
 #include "burro_preferences_dialog.h"
-#include "burro_config_keys.h"
+// #include "burro_config_keys.h"
 
 struct _BurroPreferencesDialog
 {
@@ -19,7 +19,7 @@ static void
 burro_preferences_dialog_init (BurroPreferencesDialog *prefs)
 {
     gtk_widget_init_template (GTK_WIDGET (prefs));
-
+#if 0
     prefs->settings = g_settings_new (BURRO_CONF_DOMAIN);
 
     g_settings_bind (prefs->settings, BURRO_CONF_REPL,
@@ -28,6 +28,7 @@ burro_preferences_dialog_init (BurroPreferencesDialog *prefs)
     g_settings_bind (prefs->settings, BURRO_CONF_DEBUG,
                      prefs->message_check, "active",
                      G_SETTINGS_BIND_DEFAULT);
+#endif
 }
 
 static void

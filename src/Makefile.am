@@ -1,5 +1,5 @@
 bin_PROGRAMS = burro-engine
-pkglib_LTLIBRARIES = libburrowidget.la
+lib_LTLIBRARIES = libburrowidget.la
 
 ################################################################
 # TOP-LEVEL SOURCES
@@ -15,6 +15,7 @@ SRCS_X_H = \
  x/xgdk.h \
  x/xgdk-pixbuf.h \
  x/xgio.h \
+ x/xglib.h \
  x/xgtk.h \
  x/xguile.h \
  x/xpulseaudio.h
@@ -87,14 +88,37 @@ SUFFIXES = .x
 	$(GUILE_SNARF) -o $@ $< $(snarfcppopts)
 
 gsettings_SCHEMAS = com.lonelycactus.burroengine.gschema.xml
-EXTRA_DIST += $(gsettings_SCHEMAS)
+EXTRA_DIST += $(gsettings_SCHEMAS) \
+ r/app-menu.ui \
+ r/window.ui \
+ r/burro_preferences_dialog.ui \
+ r/gears-menu.ui
+
 @GSETTINGS_RULES@
 
 
 ################################################################
 # Guile scheme libraries
 
+burroguilesitedir=$(guilesitedir)/burro
+burroprocessguilesitedir=$(burroguilesitedir)/process
+
 dist_guilesite_DATA = burro.scm
+
+dist_burroguilesite_DATA = \
+ burro/colors.scm \
+ burro/debug.scm \
+ burro/drivers.scm \
+ burro/error.scm \
+ burro/pm.scm \
+ burro/xml.scm
+
+dist_burroprocessguilesite_DATA = \
+ burro/process/base.scm \
+ burro/process/call-procedure.scm \
+ burro/process/fade.scm \
+ burro/process/text-click.scm \
+ burro/process/wait.scm
 
 ################################################################
 # Flymake support

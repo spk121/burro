@@ -5,7 +5,7 @@
 #include "burro_app_win.h"
 #include "burro_canvas.h"
 #include "burro_repl.h"
-#include "burro_config_keys.h"
+// #include "burro_config_keys.h"
 #include "burro_lisp.h"
 
 #define GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS (1000000 / 60)
@@ -982,7 +982,9 @@ SCM_DEFINE (G_debug_peek_append, "debug-peek-append", 3, 0, 0,
 void
 burro_app_win_init_guile_procedures ()
 {
+#ifndef SCM_MAGIC_SNARFER
 #include "burro_app_win.x"
+#endif
     scm_c_export ("get-sandbox",
                   "console-write-bytevector",
                   "console-write-icon",

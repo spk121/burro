@@ -2,6 +2,8 @@
 #include <gtk/gtk.h>
 #include <libguile.h>
 
+#include "x/xcairo.h"
+#include "x/xglib.h"
 #include "burro_canvas.h"
 #include "burro_canvas_colors.h"
 #include "burro_canvas_bg.h"
@@ -524,7 +526,9 @@ burro_canvas_init_guile_procedures ()
 {
     burro_canvas_vram_init_guile_procedures ();
     burro_canvas_bg_init_guile_procedures ();
+#ifndef SCM_MAGIC_SNARFER
 #include "burro_canvas.x"
+#endif
     scm_c_export ("set-blank",
                   "get-blank",
                   "set-colorswap",

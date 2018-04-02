@@ -20,7 +20,8 @@
     along with Burro Engine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "x.h"
+// #include "x.h"
+#include "x/xglib.h"
 #include "burro_canvas_vram.h"
 
 uint32_t vram_ABCD_store[VRAM_ABCD_U32_SIZE];
@@ -474,7 +475,9 @@ beginning from the top-left corner.  The image file needs to contain\n\
 void
 burro_canvas_vram_init_guile_procedures (void)
 {
+#ifndef SCM_MAGIC_SNARFER
 #include "burro_canvas_vram.x"
+#endif
     scm_c_export (
         "VRAM_A",
         "VRAM_B",

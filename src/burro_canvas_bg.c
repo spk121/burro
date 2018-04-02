@@ -20,7 +20,8 @@
 #include "burro_canvas_bg.h"
 /* #include <stdint.h> */
 /* #include <stdbool.h> */
-#include "x.h"
+#include "x/xglib.h"
+#include "x/xcairo.h"
 /* #include "bg.h" */
 /* #include "matrix.h" */
 /* #include "vram.h" */
@@ -757,7 +758,9 @@ void
 burro_canvas_bg_init_guile_procedures (void)
 {
     bg_init();
+#ifndef SCM_MAGIC_SNARFER
 #include "burro_canvas_bg.x"
+#endif
     scm_c_export ("set-background-image",
                   "set-background-map",
                   "move-background",

@@ -1,5 +1,5 @@
 #include <libguile.h>
-#include "burro_config_keys.h"
+// #include "burro_config_keys.h"
 #include "burro_repl.h"
 
 static SCM
