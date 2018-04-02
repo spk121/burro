@@ -50,10 +50,10 @@ DOT_X_FILES = \
 
 BUILT_SOURCES = $(DOT_X_FILES) \
  r/burro.resource.c \
- r/burro.resource.h
+ r/burro.resource.h \
+ burro_paths.h
 
 EXTRA_DIST = r/burro.resource.xml
-
 
 r/burro.resource.c: r/burro.resource.xml r/app-menu.ui r/window.ui r/burro_preferences_dialog.ui r/gears-menu.ui
 	$(GLIB_COMPILE_RESOURCES) --sourcedir=r --generate-source $<
@@ -61,7 +61,42 @@ r/burro.resource.c: r/burro.resource.xml r/app-menu.ui r/window.ui r/burro_prefe
 r/burro.resource.h: r/burro.resource.xml
 	$(GLIB_COMPILE_RESOURCES) --sourcedir=r --generate-header $<
 
-CLEANFILES = $(DOT_X_FILES)
+burro_paths.h: Makefile
+	$(AM_V_GEN)rm -f $@-t && \
+	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
+	  echo '#define PREFIX "$(prefix)"'; \
+	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
+	  echo '#define BINDIR "$(bindir)"'; \
+	  echo '#define SBINDIR "$(sbindir)"'; \
+	  echo '#define LIBEXECDIR "$(libexecdir)"'; \
+	  echo '#define DATAROOTDIR "$(datarootdir)"'; \
+	  echo '#define DATADIR "$(datadir)"'; \
+	  echo '#define SYSCONFDIR "$(sysconfdir)"'; \
+	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
+	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
+	  echo '#define RUNSTATEDIR "$(runstatedir)"'; \
+	  echo '#define INCLUDEDIR "$(includedir)"'; \
+	  echo '#define OLDINCLUDEDIR "$(oldincludedir)"'; \
+	  echo '#define DOCDIR "$(docdir)"'; \
+	  echo '#define INFODIR "$(infodir)"'; \
+	  echo '#define HTMLDIR "$(htmldir)"'; \
+	  echo '#define DVIDIR "$(dvidir)"'; \
+	  echo '#define PDFDIR "$(pdfdir)"'; \
+	  echo '#define PSDIR "$(psdir)"'; \
+	  echo '#define LIBDIR "$(libdir)"'; \
+	  echo '#define LISPDIR "$(lispdir)"'; \
+	  echo '#define LOCALEDIR "$(localedir)"'; \
+	  echo '#define MANDIR "$(mandir)"'; \
+	  echo '#define MANEXT "$(manext)"'; \
+	  echo '#define GUILESITEDIR "$(guilesitedir)"'; \
+	  echo '#define PKGDATADIR "$(pkgdatadir)"'; \
+	  echo '#define PKGINCLUDEDIR "$(pkgincludedir)"'; \
+	  echo '#define PKGLIBDIR "$(pkglibdir)"'; \
+	  echo '#define PKGLIBEXECDIR "$(pkglibexecdir)"'; \
+	} | sed '/""/d' > $@-t && \
+	mv -f $@-t $@
+
+CLEANFILES = $(DOT_X_FILES) burro_paths.h
 
 burro_engine_SOURCES = $(SRCS_X_H) \
  $(SRCS_X_C) \

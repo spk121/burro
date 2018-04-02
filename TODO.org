@@ -7,6 +7,11 @@
 ** Better directory and game loading handling
    Where should we be looking for jpg, png, and opus files?
    What is doctrinaire?  What is safe?
+
+   I think it should probably be
+   - the directory where the script is.
+   - or the user data dir $HOME/.local/share/burro
+   - or the standard data dirs /usr/local/share/burro or /usr/share/burro
 ** API vs internal linking
    Need to do the whole __visibility__((default)__,
    __declspec(dllexport) thing.
@@ -23,6 +28,8 @@
    When VRAM slots are overwritten, it needs to invalidate BG
    or audio
 ** Useful backtrace
+** C catch handler
+   The catch handler in burro_lisp.c doesn't handle all tag types.
 * Scheme library
 ** Twine helper functions
 * Game

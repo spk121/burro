@@ -813,16 +813,12 @@ BurroAppWindow *
 burro_app_window_new (BurroApp *app)
 {
     app_window_cur = g_object_new (BURRO_APP_WINDOW_TYPE, "application", app, NULL);
-    char *err_string;
-    app_window_cur->sandbox = burro_make_sandbox (NULL, &err_string);
-    return app_window_cur;
 }    
 
 void
 burro_app_window_open (BurroAppWindow *win,
                        GFile *file)
 {
-    // FIXME: when we open with the OPEN signal, load the file into SANDBOX
     char *err_string;
     win->sandbox = burro_make_sandbox (file, &err_string);
 

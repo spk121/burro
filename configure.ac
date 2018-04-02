@@ -110,26 +110,13 @@ AC_CONFIG_FILES([
  ])
 
 AC_CONFIG_FILES([src/uninstalled-env], [chmod +x src/uninstalled-env])
-
 AC_OUTPUT
 AC_SUBST([guilesitedir])
 
 if test "$guilesitedir" != "$GUILE_SITE"; then
    # Guile has a different prefix than this module
    AC_MSG_WARN([]
-   [The Guile modules will be installed in '${guilesitedir}'.]
-   [You should probably re-run `configure' with]
-   [`--with-guilesitedir=$GUILE_SITE']
-   [Otherwise, you will have to adjust the `GUILE_LOAD_PATH' environment]
-   [variable.])
+   [The Guile modules will be installed in '${guilesitedir}',]
+   [thus, this program will add that directory to the]
+   [Guile load path].)
 fi
-
-if test "x$GUILE_EXTENSION" != "x"; then
-if test "$guileextensiondir" != "$GUILE_EXTENSION"; then
-   AC_MSG_WARN([]
-   [The Guile extensions will be installed in ${guileextensiondir}.]
-   [You should consider re-running `configure' with]
-   [`--with-guileextensiondir=$GUILE_EXTENSION'])
-fi
-fi
-
