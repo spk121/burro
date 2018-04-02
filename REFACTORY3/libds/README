@@ -1,4 +1,0 @@
-This is a rendering engine for tiles and sprites.
-
-You give it some sprite locations and some backgrounds and it renders
-it down to a single bitmap.
