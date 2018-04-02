@@ -1,27 +1,30 @@
 #+TITLE: TODO for Burro Engine
 
 * Engine
-** Autoconf / Automake
 ** Audio file unpacking
    Probably go with libopusfile for this, because it is very simple.
+** Audio streaming
 ** Better directory and game loading handling
-   If burro-engine is run w/o a script, it should launch, make
-   the console visible, and display that there is a Guile interpreter
-   listening on port #####.
-
-   If it is launched with a script, that script should be able
-   set the game data directory in the script.
-   Assume all the game data is in a game directory, and there is a
-   top-level 'main.scm'
+   Where should we be looking for jpg, png, and opus files?
+   What is doctrinaire?  What is safe?
 ** API vs internal linking
+   Need to do the whole __visibility__((default)__,
+   __declspec(dllexport) thing.
 ** Guile port handling
 ** The big BG rewrite
-   BG still uses the VRAM
+   BG is a mess.
+** Debugger
+*** BG properties
+*** Textbox properties and action hotspots
+*** watch
+** Make pretty
+** Wisp support
+** VRAM stability
+   When VRAM slots are overwritten, it needs to invalidate BG
+   or audio
+** Useful backtrace
 * Scheme library
-** SXML to Pango GMarkup conversion
-   Also, add custom hotspot tag to GMarkup
-** Textbox hotspot mouse click and mouse over
-** Twine library
+** Twine helper functions
 * Game
 ** Prototype game in Twine
 ** Convert to Burro
