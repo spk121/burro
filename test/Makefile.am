@@ -27,10 +27,7 @@ TEST_EXTENSIONS = .scm
 SCM_LOG_COMPILER = \
 	$(top_builddir)/src/burro
 
-TESTS = \
- window_width.scm \
- window_height.scm
-
+TESTS =
 
 DEMOS = 
 

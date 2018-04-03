@@ -8,7 +8,8 @@ libburrowidget_la_SOURCES = \
  burro_canvas.c burro_canvas.h \
  burro_canvas_vram.c burro_canvas_vram.h \
  burro_canvas_bg.c burro_canvas_bg.h \
- burro_canvas_colors.c burro_canvas_colors.h
+ burro_canvas_colors.c burro_canvas_colors.h \
+ burro_canvas_audio.c burro_canvas_audio.h
 
 SRCS_X_H = \
  x/xcairo.h \
@@ -46,7 +47,8 @@ DOT_X_FILES = \
  burro_app_win.x \
  burro_canvas.x \
  burro_canvas_vram.x \
- burro_canvas_bg.x
+ burro_canvas_bg.x \
+ burro_canvas_audio.x
 
 BUILT_SOURCES = $(DOT_X_FILES) \
  r/burro.resource.c \

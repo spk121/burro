@@ -252,6 +252,9 @@ burro_canvas_init (BurroCanvas *win)
                                                     NULL,
                                                     NULL);
 
+    // Start up the audio engine
+    pulse_initialize_audio_step_1();
+    
     win->dirty = TRUE;
     canvas_cur = win;
 }
