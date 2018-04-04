@@ -1,3 +1,4 @@
+#include "../config.h"
 #include "burro_app.h"
 #include "burro_app_win.h"
 #include "burro_preferences_dialog.h"
@@ -12,17 +13,42 @@ struct _BurroApp
 G_DEFINE_TYPE(BurroApp, burro_app, GTK_TYPE_APPLICATION);
 
 static void
-action_quit (GSimpleAction *action,
-             GVariant *parameter,
-             gpointer app)
+action_about (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    GList *windows = gtk_application_get_windows (GTK_APPLICATION (app));
+    BurroApp *app = BURRO_APP (user_data);
+    GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (app));
+
+    g_return_if_fail (window);
+
+    static const char *authors[] = {
+        "Michael Gran <spk121@yahoo.com>",
+        NULL
+    };
+    
+    gtk_show_about_dialog (GTK_WINDOW (window),
+                           "program-name", "Burro Engine",
+                           "version", PACKAGE_VERSION,
+                           "copyright", "mostly Copyright 2014-2018 Michael Gran",
+                           "authors", authors,
+                           "website", "https://github.com/spk121/burro",
+                           "logo-icon-name", "burro-engine",
+                           "license-type", GTK_LICENSE_GPL_3_0,
+                           NULL);
+}
+
+static void
+action_quit (GSimpleAction *action, GVariant *parameter, gpointer app)
+{
+    GList *windows;
+
+    windows = gtk_application_get_windows (GTK_APPLICATION (app));
     g_list_foreach (windows, (GFunc) gtk_widget_destroy, NULL);
     g_application_quit (G_APPLICATION (app));
 }
 
 static GActionEntry app_entries[] =
 {
+    {"about", action_about, NULL, NULL, NULL},
     {"quit", action_quit, NULL, NULL, NULL},
 };
 

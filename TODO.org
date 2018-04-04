@@ -1,9 +1,9 @@
 #+TITLE: TODO for Burro Engine
 
 * Engine
-** Audio file unpacking
-   Probably go with libopusfile for this, because it is very simple.
-** Audio streaming
+** DONE Audio file unpacking
+   Went with vorbisfile.
+** Put pulseaudio loop in game loop
 ** Better directory and game loading handling
    Where should we be looking for jpg, png, and opus files?
    What is doctrinaire?  What is safe?
@@ -19,6 +19,7 @@
 ** The big BG rewrite
    BG is a mess.
 ** Debugger
+*** Make the debugger its own window
 *** BG properties
 *** Textbox properties and action hotspots
 *** watch

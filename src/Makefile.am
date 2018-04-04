@@ -45,6 +45,7 @@ DOT_X_FILES = \
  x/xguile.x \
  x/xpulseaudio.x \
  burro_app_win.x \
+ burro_debug_window.x \
  burro_canvas.x \
  burro_canvas_vram.x \
  burro_canvas_bg.x \
@@ -57,7 +58,7 @@ BUILT_SOURCES = $(DOT_X_FILES) \
 
 EXTRA_DIST = r/burro.resource.xml
 
-r/burro.resource.c: r/burro.resource.xml r/app-menu.ui r/window.ui r/burro_preferences_dialog.ui r/gears-menu.ui
+r/burro.resource.c: r/burro.resource.xml r/app-menu.ui r/window.ui r/debug-window.ui r/burro_preferences_dialog.ui r/gears-menu.ui
 	$(GLIB_COMPILE_RESOURCES) --sourcedir=r --generate-source $<
 
 r/burro.resource.h: r/burro.resource.xml
@@ -107,6 +108,7 @@ burro_engine_SOURCES = $(SRCS_X_H) \
  r/burro.resource.c r/burro.resource.h \
  burro_app.c burro_app.h \
  burro_app_win.c burro_app_win.h \
+ burro_debug_window.c burro_debug_window.h \
  burro_preferences_dialog.c burro_preferences_dialog.h \
  burro_lisp.c burro_lisp.h \
  burro_repl.c burro_repl.h \

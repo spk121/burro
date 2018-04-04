@@ -2,6 +2,7 @@
 <gresources>
   <gresource prefix="/com/lonelycactus/burroengine">
     <file preprocess="xml-stripblanks">window.ui</file>
+    <file preprocess="xml-stripblanks">debug-window.ui</file>
     <file preprocess="xml-stripblanks">app-menu.ui</file>
     <file preprocess="xml-stripblanks">gears-menu.ui</file>
     <file preprocess="xml-stripblanks">burro_preferences_dialog.ui</file>

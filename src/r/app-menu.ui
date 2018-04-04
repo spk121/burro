@@ -5,6 +5,10 @@
   <menu id="appmenu">
     <section>
       <item>
+	<attribute name="label">_About</attribute>
+	<attribute name="action">app.about</attribute>
+      </item>
+      <item>
 	<attribute name="label">_Quit</attribute>
 	<attribute name="action">app.quit</attribute>
       </item>
