@@ -10,6 +10,8 @@ G_DECLARE_FINAL_TYPE (BurroCanvas, burro_canvas, BURRO, CANVAS, GtkDrawingArea)
 
 #define BURRO_CANVAS_WIDTH 512
 #define BURRO_CANVAS_HEIGHT 384
+#define BURRO_CANVAS_MARGIN 50
+
 #define BURRO_CANVAS_ZLEVEL_COUNT 4
 BurroCanvas *burro_canvas_new ();
 

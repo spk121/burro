@@ -126,6 +126,7 @@ init_burro_engine (void *unused)
 {
     // Load up the C-defined procedures
     burro_app_win_init_guile_procedures();
+    burro_debug_window_init_guile_procedures();
     burro_canvas_init_guile_procedures();
 }
 

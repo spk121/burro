@@ -133,7 +133,7 @@ static void paint_transformed_image (cairo_t *context,
     cairo_set_matrix (context, matrix);
 
     /* Now copy it to the screen */
-    cairo_set_source_surface (context, surface, 0, 0);
+    cairo_set_source_surface (context, surface, BURRO_CANVAS_MARGIN, BURRO_CANVAS_MARGIN);
     cairo_paint (context);
 
     /* Restore the coordinate system to normal */
@@ -167,7 +167,7 @@ static void draw_textbox()
                           0.7 * canvas_cur->brightness,
                           0.7 * canvas_cur->brightness,
                           0.7 * canvas_cur->brightness);
-    cairo_move_to(canvas_cur->context, 0, 0);
+    cairo_move_to(canvas_cur->context, BURRO_CANVAS_MARGIN, BURRO_CANVAS_MARGIN);
     pango_cairo_show_layout (canvas_cur->context, canvas_cur->layout);
     cairo_restore(canvas_cur->context);
 }
@@ -221,14 +221,17 @@ burro_canvas_init (BurroCanvas *win)
                            | GDK_BUTTON_PRESS_MASK
                            | GDK_POINTER_MOTION_MASK);
 
-    gtk_widget_set_size_request(GTK_WIDGET(win), BURRO_CANVAS_WIDTH, BURRO_CANVAS_HEIGHT);
+    gtk_widget_set_size_request(GTK_WIDGET(win),
+                                BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
+                                BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
 
     win->blank_flag = FALSE;
     win->colorswap_flag = FALSE;
     win->brightness = 1.0;
 
     win->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                               BURRO_CANVAS_WIDTH, BURRO_CANVAS_HEIGHT);
+                                               BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
+                                               BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
     win->context = cairo_create (win->surface);
     cairo_set_antialias (win->context, CAIRO_ANTIALIAS_NONE);
 
@@ -476,7 +479,9 @@ SCM_DEFINE(G_update_text_fgcolor_on_region, "update-text-fgcolor-on-region",
 gboolean burro_canvas_xy_to_index (BurroCanvas *canvas, double x, double y, int *index, int *trailing)
 {
     gboolean ret;
-    
+
+    x -= BURRO_CANVAS_MARGIN;
+    y -= BURRO_CANVAS_MARGIN;
     x *=  PANGO_SCALE;
     y *=  PANGO_SCALE;
     ret = pango_layout_xy_to_index (canvas_cur->layout, x, y, index, trailing);
