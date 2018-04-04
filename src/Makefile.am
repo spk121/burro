@@ -113,11 +113,11 @@ burro_engine_SOURCES = $(SRCS_X_H) \
  main.c
 
 burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrowidget -lm
-AM_CFLAGS = $(DEPS_CFLAGS) $(GUILE_CFLAGS)
+AM_CFLAGS = $(DEPS_CFLAGS) $(GUILE_CFLAGS) 
 
-libborrowidget_la_CFLAGS = -fvisibility=hidden
+libborrowidget_la_CFLAGS = -fvisibility=hidden $(VORBISFILE_CFLAGS) 
 libburrowidget_la_LDFLAGS = -no-undefined
-libburrowidget_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) -lm
+libburrowidget_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
 
 snarfcppopts = $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
 

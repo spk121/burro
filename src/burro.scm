@@ -72,9 +72,23 @@
      get-vram-filename
      get-vram-image-size
      vram-get-u32-size
-     load-image-file-into-vram
+     load-image-file
+     load-audio-file
+     ;; from burro_canvas_audio.c
+     audio-channel-play
+     audio-channel-pause
+     audio-channel-unpause
+     audio-channel-stop
+     audio-channel-playing?
+     audio-channel-set-volume
+     audio-channel-get-volume
+     audio-pause
+     audio-unpause
+     audio-set-volume
+     audio-get-volume
      BG_0 BG_1 BG_2 BG_3
-     set-background-image)))
+     set-background-image
+     )))
 
 (define (make-sandbox)
   (make-sandbox-module

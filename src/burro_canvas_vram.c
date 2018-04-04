@@ -24,8 +24,9 @@
 #include "x/xglib.h"
 #include "burro_canvas_vram.h"
 
-uint32_t vram_ABCD_store[VRAM_ABCD_U32_SIZE];
-uint32_t vram_EFGHIJ_store[VRAM_EFGHIJ_U32_SIZE];
+uint32_t vram_ABCD_store[VRAM_ABCD_U32_SIZE] __attribute__((aligned(32))) ;
+uint32_t vram_EFGHIJ_store[VRAM_EFGHIJ_U32_SIZE] __attribute__((aligned(32))) ;
+
 vram_info_t vram_info[VRAM_COUNT];
 
 static GtkListStore *vram_list_store = NULL;
@@ -33,7 +34,7 @@ static GtkListStore *vram_list_store = NULL;
 static const char vram_type_name[VRAM_N_TYPES][15] = {
     [VRAM_TYPE_RAW] = "Raw",
     [VRAM_TYPE_IMAGE] = "Image",
-    [VRAM_TYPE_OPUS] = "Audio"
+    [VRAM_TYPE_AUDIO] = "Audio"
 };
 
 static int vram_size[VRAM_COUNT] = {
@@ -183,6 +184,8 @@ static char *vram_size_string(int i)
         return g_strdup_printf("%d kB", vram_size[i] * 4 / 1024);
     else if (vram_info[i].type == VRAM_TYPE_IMAGE)
         return g_strdup_printf("%d by %d", vram_info[i].width, vram_info[i].height);
+    else if (vram_info[i].type == VRAM_TYPE_AUDIO)
+        return g_strdup_printf("%d kB", vram_info[i].size / 1024);
     else
         return g_strdup ("unknown");
 }
@@ -318,69 +321,13 @@ of the VRAM bank.")
         ret = scm_from_utf8_symbol ("raw");
     else if (type == VRAM_TYPE_IMAGE)
         ret = scm_from_utf8_symbol ("image");
+    else if (type == VRAM_TYPE_AUDIO)
+        ret = scm_from_utf8_symbol ("audio");
     else
         ret = scm_from_utf8_symbol ("unknown");
 
     return ret;
 }
-
-SCM_DEFINE (G_vram_get_filename, "get-vram-filename", 1, 0, 0, (SCM index), "\
-Returns, as a sring, the filename associated with the current contents\n\
-of the VRAM bank.")
-{
-    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "get-vram-type");
-    vram_bank_t i = _scm_to_vram_bank_t (index);
-    char *fname = vram_info[i].filename;
-    SCM ret;
-    if (fname)
-        ret =  scm_from_locale_string (fname);
-    else
-        ret = SCM_BOOL_F;
-
-    return ret;
-}
-
-SCM_DEFINE (G_get_vram_image_size, "get-vram-image-size",
-            1, 0, 0, (SCM index), "\
-Returns, as a two-element list, the width and height of the image loaded\n\
-in the VRAM bank.")
-{
-    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "get-vram-image-size");
-    vram_bank_t i = _scm_to_vram_bank_t (index);
-    char *fname = vram_info[i].filename;
-    SCM ret;
-    if (vram_info[i].type == VRAM_TYPE_IMAGE)
-        ret =  scm_list_2 (scm_from_int (vram_info[i].width),
-                           scm_from_int (vram_info[i].height));
-    else
-        ret = SCM_BOOL_F;
-
-    return ret;
-}
-
-
-SCM_DEFINE (G_vram_get_u32_size, "vram-get-u32-size", 1, 0, 0, (SCM index),
-            "Given an index that represents a VRAM bank, return the maximum number of \n\
-32-bit integers that it could contain in its bytevector.")
-{
-    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "vram-get-u32-size");
-    
-    return scm_from_int (vram_get_u32_size (_scm_to_vram_bank_t (index)));
-}
-
-#if 0
-SCM_DEFINE (G_get_vram_info, "get-vram-info", 1, 0, 0, (SCM index),"\
-Return a list that describes the state of a VRAM bank.")
-{
-    return scm_list_5( scm_cons(scm_from_utf8_symbol ("name"),
-                                scm_from_utf8_string (vram_bank_name[i])),
-                       scm_cons(scm_from_utf8_symbol ("max-width"),
-                                scm_from_int (vram_width[i])),
-                       scm_cons(scm_from_utf8_symbol ("max-height"),
-                                scm_from_int (vram_height[i])),
-                       scm_cons(scm_from_utf8_symbol ("type")));
-}
-#endif                                
 
 static gboolean
 set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
@@ -455,14 +402,165 @@ set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
     g_return_val_if_reached (TRUE);
 }
 
-SCM_DEFINE (G_burro_canvas_vram_load_image_file, "load-image-file-into-vram",
+
+////////////////////////////////////////////////////////////////
+// Ogg Vorbis IO Callbacks
+
+vram_io_context_t *
+vram_audio_open (int index)
+{
+    if (!vram_validate_int_as_vram_bank_t (index)
+        || vram_info[index].type != VRAM_TYPE_AUDIO
+        || vram_info[index].size == 0)
+        return NULL;
+    
+    vram_io_context_t *io = g_malloc (sizeof(vram_io_context_t));
+    io->index = index;
+    io->open = TRUE;
+    io->ptr = vram_get_u32_ptr(io->index);
+    io->size = vram_info[io->index].size;
+    io->position = 0L;
+    return io;
+}
+
+size_t
+vram_audio_read (void *ptr, size_t size, size_t nmemb, void *context)
+{
+    vram_io_context_t *io = (vram_io_context_t *) context;
+    size_t start, end;
+
+    if (ptr == NULL || size == 0 || nmemb == 0)
+        return 0;
+    
+    if (!io || !io->open)
+        return 0;
+    
+    start = io->position;
+    end = start + size * nmemb;
+    if (start >= io->size)
+        return 0;
+
+    if (end > io->size)
+        end = io->size;
+
+    memmove (ptr, io->ptr + start, end - start);
+    io->position = end;
+    return end - start;
+}
+
+int
+vram_audio_seek (void *context, gint64 offset, int whence)
+{
+    vram_io_context_t *io = (vram_io_context_t *) context;
+    gint64 start, end;
+
+    if (!io || !io->open)
+        return -1;
+
+    if (whence == SEEK_SET)
+        start = 0;
+    else if (whence == SEEK_CUR)
+        start = io->position;
+    else if (whence == SEEK_END)
+        start = io->size;
+
+    end = start + offset;
+    if (end < 0)
+        end = 0;
+    if (end > io->size)
+        end = io->size;
+    io->position = end;
+    if (end < G_MAXINT)
+        return end;
+    else
+        return G_MAXINT;
+}
+
+int
+vram_audio_close (void *context)
+{
+    vram_io_context_t *io = (vram_io_context_t *) context;
+    io->open = FALSE;
+}
+
+long
+vram_audio_tell (void *context)
+{
+    vram_io_context_t *io = (vram_io_context_t *) context;
+    if (!io || !io->open)
+        return -1;
+
+    return io->position;
+}
+    
+////////////////////////////////////////////////////////////////
+
+SCM_DEFINE (G_vram_get_filename, "get-vram-filename", 1, 0, 0, (SCM index), "\
+Returns, as a sring, the filename associated with the current contents\n\
+of the VRAM bank.")
+{
+    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "get-vram-type");
+    vram_bank_t i = _scm_to_vram_bank_t (index);
+    char *fname = vram_info[i].filename;
+    SCM ret;
+    if (fname)
+        ret =  scm_from_locale_string (fname);
+    else
+        ret = SCM_BOOL_F;
+
+    return ret;
+}
+
+SCM_DEFINE (G_get_vram_image_size, "get-vram-image-size",
+            1, 0, 0, (SCM index), "\
+Returns, as a two-element list, the width and height of the image loaded\n\
+in the VRAM bank.")
+{
+    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "get-vram-image-size");
+    vram_bank_t i = _scm_to_vram_bank_t (index);
+    SCM ret;
+    if (vram_info[i].type == VRAM_TYPE_IMAGE)
+        ret =  scm_list_2 (scm_from_int (vram_info[i].width),
+                           scm_from_int (vram_info[i].height));
+    else
+        ret = SCM_BOOL_F;
+
+    return ret;
+}
+
+
+SCM_DEFINE (G_vram_get_u32_size, "vram-get-u32-size", 1, 0, 0, (SCM index),
+            "Given an index that represents a VRAM bank, return the maximum number of \n\
+32-bit integers that it could contain in its bytevector.")
+{
+    SCM_ASSERT(_scm_is_vram_bank_t(index), index, SCM_ARG1, "vram-get-u32-size");
+    
+    return scm_from_int (vram_get_u32_size (_scm_to_vram_bank_t (index)));
+}
+
+#if 0
+SCM_DEFINE (G_get_vram_info, "get-vram-info", 1, 0, 0, (SCM index),"\
+Return a list that describes the state of a VRAM bank.")
+{
+    return scm_list_5( scm_cons(scm_from_utf8_symbol ("name"),
+                                scm_from_utf8_string (vram_bank_name[i])),
+                       scm_cons(scm_from_utf8_symbol ("max-width"),
+                                scm_from_int (vram_width[i])),
+                       scm_cons(scm_from_utf8_symbol ("max-height"),
+                                scm_from_int (vram_height[i])),
+                       scm_cons(scm_from_utf8_symbol ("type")));
+}
+#endif                                
+
+
+SCM_DEFINE (G_load_image_file, "load-image-file",
             2, 0, 0, (SCM filename, SCM index), "\
 This procedure loads an image file and stores it into a VRAM bank. If\n\
 it doesn't fit in the VRAM bank, it just stores as much will fit,\n\
 beginning from the top-left corner.  The image file needs to contain\n\
 32-bit RGB color.")
 {
-    SCM_ASSERT (scm_is_string (filename), filename, SCM_ARG1, "set-vram-from-image-file");
+    SCM_ASSERT (scm_is_string (filename), filename, SCM_ARG1, "load-image-file");
     
     char *path = scm_to_locale_string (filename);
     gboolean ret = 
@@ -470,6 +568,85 @@ beginning from the top-left corner.  The image file needs to contain\n\
     free(path);
     vram_info_list_store_update(vram_list_store);
     return scm_from_bool(ret);
+}
+
+SCM_DEFINE (G_load_audio_file, "load-audio-file", 2, 0, 0,
+            (SCM filename, SCM index), "\
+The procedure loads an audio file and stores it, unmodified,\n\
+into a VRAM bank.  If it doesn't fit, it ddoes nothing. Check the list\n\
+of supported formats.")
+{
+    SCM_ASSERT (scm_is_string (filename), filename, SCM_ARG1, "load-audio-file");
+    int vram = scm_to_int(index);
+    char *path = scm_to_locale_string (filename);
+
+    if (!g_str_has_suffix (path, ".ogg")
+        && g_str_has_suffix (path, ".ogv"))
+    {
+        g_message ("load-audio-file: %s doesn't have an .ogg or .ogv extension\n", path);
+        free (path);
+        return SCM_BOOL_F;
+    }
+    
+    GFile *f = g_file_new_for_path (path);
+    GError *error = NULL;
+    GFileInfo *fi = g_file_query_info (f, 
+                                       "standard::size,standard::display-name",
+                                       0,
+                                       NULL,
+                                       &error);
+    if (fi == NULL)
+    {
+        g_message ("load-audio-file: %s", error->message);
+        g_error_free (error);
+    }
+    else if (g_file_info_get_size (fi) > 4 * vram_size[vram])
+    {
+        g_message ("load-audio-file: file %s is too large for %s",
+                   g_file_info_get_display_name (fi),
+                   vram_bank_name[vram]);
+    }
+    else 
+    {
+        GFileInputStream *in = g_file_read (f, NULL, &error);
+        if (in == NULL)
+        {
+            g_message ("load-audio-file: %s", error->message);
+            g_error_free (error);
+        }
+        else
+        {
+            gsize bytes_read;
+            gboolean ret = g_input_stream_read_all (G_INPUT_STREAM (in),
+                                                    vram_ptr[vram],
+                                                    4 * vram_size[vram],
+                                                    &bytes_read,
+                                                    NULL,
+                                                    &error);
+            if (ret)
+            {
+                vram_info[vram].type = VRAM_TYPE_AUDIO;
+                free (vram_info[vram].filename);
+                vram_info[vram].filename = g_strdup(g_file_info_get_display_name (fi));
+                vram_info[vram].size = bytes_read;
+                g_info ("Loaded audio file %s into %s.",
+                        vram_info[vram].filename,
+                        vram_bank_name[vram]);
+                vram_info_list_store_update(vram_list_store);
+            }
+            else
+            {
+                g_message ("load-audio-file: %s", error->message);
+                g_error_free (error);
+            }
+            g_input_stream_close (G_INPUT_STREAM (in), NULL, NULL);
+            g_object_unref (in);
+        }
+    }
+    g_object_unref (fi);
+    g_object_unref (f);
+    free (path);
+    return SCM_UNSPECIFIED;
 }
 
 void
@@ -494,7 +671,8 @@ burro_canvas_vram_init_guile_procedures (void)
         "get-vram-image-size",
         "VRAM_INDEX_LIST",
         "vram-get-u32-size",
-        "load-image-file-into-vram",
+        "load-image-file",
+        "load-audio-file",
         NULL);
 }
 

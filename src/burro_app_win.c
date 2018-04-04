@@ -813,6 +813,7 @@ BurroAppWindow *
 burro_app_window_new (BurroApp *app)
 {
     app_window_cur = g_object_new (BURRO_APP_WINDOW_TYPE, "application", app, NULL);
+    return app_window_cur;
 }    
 
 void

@@ -23,9 +23,9 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([DEPS],[gtk+-3.0
                           gio-2.0
                           glib-2.0
-                          dnl guile-2.2
                           libpulse
                           libpulse-mainloop-glib])
+PKG_CHECK_MODULES([VORBISFILE],[vorbisfile])
 
 AC_ARG_WITH([zegu],
 	    [AS_HELP_STRING([--with-zegu], 

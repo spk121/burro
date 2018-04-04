@@ -82,7 +82,7 @@
  *  to 10-bit 32kHz Stereo before it was sent to the hardware
  *  for playback.
  *
- *  On the other hand, S15LE 48000 Hz is friendly to Opus.
+ *  On the other hand, S16LE 48000 Hz is friendly to Opus.
  *
  * B
  */
@@ -92,7 +92,7 @@
 
 /** The size of the audio buffer.  Consequently the maximum duration
     of a single read by Pulseaudio. */
-#define AUDIO_BUFFER_DURATION_IN_MILLISECONDS (5000u)
+#define AUDIO_BUFFER_DURATION_IN_MILLISECONDS (2000u)
 
 /** Number of samples in the audio buffer. */
 #define AUDIO_BUFFER_SIZE \

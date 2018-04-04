@@ -529,6 +529,7 @@ burro_canvas_init_guile_procedures ()
 {
     burro_canvas_vram_init_guile_procedures ();
     burro_canvas_bg_init_guile_procedures ();
+    audio_init_guile();
 #ifndef SCM_MAGIC_SNARFER
 #include "burro_canvas.x"
 #endif
