@@ -1,15 +1,16 @@
 bin_PROGRAMS = burro-engine
-lib_LTLIBRARIES = libburrowidget.la
+lib_LTLIBRARIES = libburrocanvas.la
 
 ################################################################
 # TOP-LEVEL SOURCES
 
-libburrowidget_la_SOURCES = \
- burro_canvas.c burro_canvas.h \
- burro_canvas_vram.c burro_canvas_vram.h \
- burro_canvas_bg.c burro_canvas_bg.h \
- burro_canvas_colors.c burro_canvas_colors.h \
- burro_canvas_audio.c burro_canvas_audio.h
+libburrocanvas_la_SOURCES = \
+ canvas.c canvas.h \
+ canvas_vram.c canvas_vram.h \
+ canvas_bg.c canvas_bg.h \
+ canvas_colors.c canvas_colors.h \
+ canvas_audio.c canvas_audio.h \
+ canvas_lib.c canvas_lib.h
 
 SRCS_X_H = \
  x/xcairo.h \
@@ -46,10 +47,10 @@ DOT_X_FILES = \
  x/xpulseaudio.x \
  burro_app_win.x \
  burro_debug_window.x \
- burro_canvas.x \
- burro_canvas_vram.x \
- burro_canvas_bg.x \
- burro_canvas_audio.x
+ canvas.x \
+ canvas_vram.x \
+ canvas_bg.x \
+ canvas_audio.x
 
 BUILT_SOURCES = $(DOT_X_FILES) \
  r/burro.resource.c \
@@ -102,9 +103,6 @@ burro_paths.h: Makefile
 CLEANFILES = $(DOT_X_FILES) burro_paths.h
 
 burro_engine_SOURCES = $(SRCS_X_H) \
- $(SRCS_X_C) \
- $(SRCS_Y_H) \
- $(SRCS_Y_C) \
  r/burro.resource.c r/burro.resource.h \
  burro_app.c burro_app.h \
  burro_app_win.c burro_app_win.h \
@@ -114,12 +112,16 @@ burro_engine_SOURCES = $(SRCS_X_H) \
  burro_repl.c burro_repl.h \
  main.c
 
-burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrowidget -lm
+burro_engine_LDFLAGS = -Wl,--no-undefined -Wl,--no-allow-shlib-undefined
+burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
 AM_CFLAGS = $(DEPS_CFLAGS) $(GUILE_CFLAGS)
 
-libburrowidget_la_CFLAGS = -fvisibility=hidden $(DEPS_CFLAGS) $(GUILE_CFLAGS) $(VORBISFILE_CFLAGS)
-libburrowidget_la_LDFLAGS = -no-undefined
-libburrowidget_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
+libburrocanvas_la_CFLAGS = -fvisibility=hidden \
+	$(DEPS_CFLAGS) \
+	$(GUILE_CFLAGS) \
+	$(VORBISFILE_CFLAGS)
+libburrocanvas_la_LDFLAGS = -Wl,--no-undefined -Wl,--no-allow-shlib-undefined
+libburrocanvas_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
 
 snarfcppopts = $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
 
@@ -161,20 +163,3 @@ dist_burroprocessguilesite_DATA = \
  burro/process/text-click.scm \
  burro/process/wait.scm
 
-################################################################
-# Flymake support
-
-get_cs_flags = $(foreach target,$(subst .,_,$(subst -,_,$($(2)))),$($(target)_$(1)FLAGS))
-get_cs_all_flags = $(foreach type,$(2),$(call get_cs_flags,$(1),$(type)))
-get_cs_compile = $(if $(subst C,,$(1)),$($(1)COMPILE),$(COMPILE))
-get_cs_cmdline = $(call get_cs_compile,$(1)) $(call get_cs_all_flags,$(1),check_PROGRAMS bin_PROGRAMS lib_LTLIBRARIES) -fsyntax-only
-
-check-syntax:
-        s=$(suffix $(CHK_SOURCES));\
-        if   [ "$$s" = ".c"   ]; then \
-		$(call get_cs_cmdline,C)   $(CHK_SOURCES);\
-        elif [ "$$s" = ".cpp" ]; then \
-		$(call get_cs_cmdline,CXX) $(CHK_SOURCES);\
-        else exit 1; fi
-
-.PHONY: check-syntax

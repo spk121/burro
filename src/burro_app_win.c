@@ -3,7 +3,7 @@
 
 #include "burro_app.h"
 #include "burro_app_win.h"
-#include "burro_canvas.h"
+#include "canvas.h"
 #include "burro_resources.h"
 #include "burro_lisp.h"
 #include "burro_debug_window.h"
@@ -220,11 +220,11 @@ signal_action_canvas_button_press_event (GtkWidget *widget,
         app_window_cur->mouse_click_x = button->x;
         app_window_cur->mouse_click_y = button->y;
         int index, trailing;
-        if (burro_canvas_xy_to_index (app_window_cur->canvas,
-                                      button->x,
-                                      button->y,
-                                      &index,
-                                      &trailing))
+        if (canvas_xy_to_index (app_window_cur->canvas,
+                                button->x,
+                                button->y,
+                                &index,
+                                &trailing))
         {
             app_window_cur->have_text_click_event = TRUE;
             app_window_cur->text_click_location = index;
@@ -244,11 +244,11 @@ signal_action_canvas_motion_notify_event (GtkWidget *widget,
     app_window_cur->have_mouse_move_event = TRUE;
     app_window_cur->mouse_move_x = event->x;
     app_window_cur->mouse_move_y = event->y;
-    if (burro_canvas_xy_to_index (app_window_cur->canvas,
-                                  event->x,
-                                  event->y,
-                                  &index,
-                                  &trailing))
+    if (canvas_xy_to_index (app_window_cur->canvas,
+                            event->x,
+                            event->y,
+                            &index,
+                            &trailing))
     {
         app_window_cur->have_text_move_event = TRUE;
         app_window_cur->text_move_location = index;
@@ -320,7 +320,7 @@ game_loop (gpointer user_data)
                     dt = GAME_LOOP_IDEAL_PERIOD_MICROSECONDS;
 
                 // Update the audio engine
-                burro_canvas_audio_iterate();
+                canvas_audio_iterate();
 
                 // Update the TCP repl, if it is running
                 repl_tick(win->repl);
@@ -439,6 +439,9 @@ burro_app_window_init (BurroAppWindow *win)
     GMenuModel *menu;
     GAction *action;
 
+    BurroCanvas *tmp = burro_canvas_new();
+    printf("%p\n", tmp);
+
     gtk_widget_init_template (GTK_WIDGET (win));
 
     // Construct the menu
@@ -476,9 +479,11 @@ burro_app_window_init (BurroAppWindow *win)
 
     // FIXME: how to do this properly
     // Really shrink the window down to minimal
+#if 0    
     gtk_window_resize (GTK_WINDOW(win),
-                       BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
-                       BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
+                       CANVAS_WIDTH + 2 * CANVAS_MARGIN,
+                       CANVAS_HEIGHT + 2 * CANVAS_MARGIN);
+#endif
 
     // The game loop needs to know about mouse moves and mouse clicks
     // that specifically happen in the canvas.

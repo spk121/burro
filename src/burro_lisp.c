@@ -2,8 +2,8 @@
 #include "burro_paths.h"
 #include "burro_lisp.h"
 #include "burro_app_win.h"
-#include "burro_canvas.h"
-#include "burro_canvas_vram.h"
+#include "canvas.h"
+#include "canvas_vram.h"
 
 /* In this module a couple of things happen.
 
@@ -127,7 +127,7 @@ init_burro_engine (void *unused)
     // Load up the C-defined procedures
     burro_app_win_init_guile_procedures();
     burro_debug_window_init_guile_procedures();
-    burro_canvas_init_guile_procedures();
+    canvas_init_guile_procedures();
 }
 
 static SCM

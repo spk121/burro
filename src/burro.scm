@@ -40,14 +40,16 @@
 
     ((burro drivers)
      clickable-text)
-    
+
+    ((burro pm)
+     pm-info)
     ((burro engine)
-     ;; From burro_app_win.c
+     ;; From Burro
      set-title
      debug-peek-append
      ;; receive-clock-tick
      ;; register-game-loop-handler
-     ;; From burro_canvas.c
+     ;; From Canvas
      set-brightness
      get-brightness
      set-colorswap
@@ -57,7 +59,6 @@
      set-backdrop
      get-backdrop
      set-markup
-     ;; from burro_canvas_vram.c
      VRAM_A
      VRAM_B
      VRAM_C
@@ -74,7 +75,6 @@
      vram-get-u32-size
      load-image-file
      load-audio-file
-     ;; from burro_canvas_audio.c
      audio-channel-play
      audio-channel-pause
      audio-channel-unpause

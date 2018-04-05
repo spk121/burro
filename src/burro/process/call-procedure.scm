@@ -16,6 +16,7 @@
 (define (call-procedure-process proc)
   "Call a thunk and exit."
   (let ((self (make-base-process)))
+    (set-name! self "call-procedure")
     (set-type! self PROC_SCRIPTING)
     (var-set! self 'procedure proc)
     (set-on-update-func! self on-update)

@@ -117,6 +117,7 @@ if it changed or #f otherwise."
 			    hot-color-name
 			    transition-time)
   (let ((self (make-base-process)))
+    (set-name! self "text-click")
     (set-type! self PROC_CONTROL)
     (set-process-flags! self (logior PROCESS_FLAG_TEXT_MOVE
 				     PROCESS_FLAG_TEXT_CLICK))

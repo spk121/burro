@@ -1,4 +1,4 @@
-#include "burro_canvas_colors.h"
+#include "canvas_colors.h"
 
 #include <stdint.h>
 #include <strings.h>
@@ -798,7 +798,7 @@ color_name_t color_names[783] = {
 };
 
 gboolean
-burro_canvas_lookup_colorval (char *name, guint32 *val)
+canvas_lookup_colorval (char *name, guint32 *val)
 {
   g_return_val_if_fail (name != NULL, FALSE);
   g_return_val_if_fail (val != NULL, FALSE);

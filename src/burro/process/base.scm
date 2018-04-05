@@ -21,7 +21,10 @@
 
 	    make-process
 	    process?
-	    
+	    process-info
+
+	    get-name
+	    set-name!
 	    get-type
 	    set-type!
 	    get-kill-flag
@@ -121,10 +124,11 @@
 (define PROCESS_FLAG_TEXT_CLICK #x0010)
 
 (define-record-type process
-  (make-process type)
+  (make-process name type)
   process?
 
   ;; Properties
+  (name                get-name        set-name!)
   (type                get-type        set-type!)		; integer? symbol?
   (kill-flag           get-kill-flag   set-kill-flag!)				
   (active-flag         get-active-flag set-active-flag!)
@@ -177,6 +181,15 @@
 	 (proc val1 val2)
 	 #f))))
 
+(define (process-info p)
+  "Debug information about a process"
+  (list
+   (cons 'name (get-name p))
+   (cons 'type (get-type p))
+   (cons 'initialized (get-initial-update-flag p))
+   (cons 'active (get-active-flag p))
+   (cons 'paused (get-paused-flag p))
+   (cons 'vars (get-variable-alist p))))
 
 (define (process-is-dead? p)
   (and=> (get-is-dead-func p) p))
@@ -263,7 +276,7 @@
     (set-initial-update-flag! p #f)))
   
 (define (make-base-process)
-  (let ((p (make-process PROC_BASE)))
+  (let ((p (make-process "base" PROC_BASE)))
     (set-kill-flag! p #f)
     (set-active-flag! p #t)
     (set-process-flags! p 0)

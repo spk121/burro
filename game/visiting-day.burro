@@ -1,0 +1,42 @@
+;; -*- mode: scheme -*-
+
+(define (Begin)
+  (set-title "Here and Now")
+  (clickable-text
+   `(markup
+     "Let me tell you a secret story.  It is about me "
+     "but I want you to tell me what you do.\n\n"
+     (a (@ (action ,LivingRoom)) "OK, I guess."))))
+
+(define (LivingRoom)
+  (set-title "Interior: Living Room")
+  (clickable-text
+   `(markup
+     "Today, you have an appointment to visit your son in jail.\n\n"
+     "You look up at the clock.  You probably can't delay any longer.\n\n"
+     "How much traffic at this hour?  30 minutes? 40?  Hard to say.  "
+     "You're usually at work mid-day on a weekday.\n\n"
+     "Do you "
+     (a (@ (action ,SetOut)) "set out immediately")
+     " or "
+     (a (@ (action ,Pray)) "say a quick prayer")
+     ".")))
+
+(define (Pray)
+  (set-backdrop "grey100")
+  (clickable-text
+   `(markup
+     "\t“O Heavenly Father, I commend my son to Thy care. "
+     "Be Thou his God and Father; and mercifully supply whatever is "
+     "lacking in me through frailty or negligence. "
+     "Strengthen him to overcome the corruptions of the world, "
+     "whether from within or without; and deliver him from the secret "
+     "snares of the enemy.”\n\n\t"
+     (a (@ (action ,SetOut)) "Amen"))))
+
+(define (SetOut)
+  (clickable-text
+   `(markup
+     "You go")))
+
+(Begin)

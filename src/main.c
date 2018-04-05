@@ -2,6 +2,7 @@
 #include <locale.h>
 #include <libguile.h>
 #include "burro_app.h"
+#include "canvas.h"
 
 int
 main (int argc, char *argv[])

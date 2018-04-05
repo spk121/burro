@@ -19,6 +19,7 @@
 	   pm-set-mouse-click
 	   pm-set-text-move
 	   pm-set-text-click
+	   pm-info
 	   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -104,6 +105,23 @@
 (define (pm-has-processes?)
   "true if there is anything going on."
   (not (null? *process-list*)))
+
+(define (pm-info)
+  "Return debug information for the process manager."
+  (if (not (pm-has-processes?))
+      '()
+      ;; else
+      (map
+       (lambda (head-process)
+	 (let loop ((process head-process)
+		    (output-prev '()))
+	   (let ((next-process (process-get-next process))
+		 (output (append output-prev (process-info process))))
+	     (if next-process
+		 (loop next-process output)
+		 ;; else output what we've got
+		 output))))
+       *process-list*)))
 
 (define (pm-delete-all)
   (for-each pm-detach *process-list*))

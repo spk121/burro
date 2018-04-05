@@ -1,5 +1,5 @@
 #include "burro_debug_window.h"
-#include "burro_canvas.h"
+#include "canvas.h"
 #include "burro_repl.h"
 #include "burro_resources.h"
 

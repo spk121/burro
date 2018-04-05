@@ -17,17 +17,8 @@
     along with Burro Engine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "burro_canvas_bg.h"
-/* #include <stdint.h> */
-/* #include <stdbool.h> */
-#include "x/xglib.h"
-#include "x/xcairo.h"
-/* #include "bg.h" */
-/* #include "matrix.h" */
-/* #include "vram.h" */
-/* #include "guile.h" */
-/* #include "pixbuf.h" */
-/* #include "console.h" */
+#include "canvas_bg.h"
+#include "canvas_lib.h"
 
 /** Information about a single layer of a multi-layer background. */
 typedef struct
@@ -755,11 +746,11 @@ SCM_DEFINE (G_reset_background, "reset-background", 1, 0, 0,
 }
 
 void
-burro_canvas_bg_init_guile_procedures (void)
+canvas_bg_init_guile_procedures (void)
 {
     bg_init();
 #ifndef SCM_MAGIC_SNARFER
-#include "burro_canvas_bg.x"
+#include "canvas_bg.x"
 #endif
     scm_c_export ("set-background-image",
                   "set-background-map",

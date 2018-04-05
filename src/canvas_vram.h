@@ -1,8 +1,9 @@
-#ifndef BURRO_CANVAS_VRAM_H
-#define BURRO_CANVAS_VRAM_H
+#ifndef CANVAS_VRAM_H
+#define CANVAS_VRAM_H
 
 #include <libguile.h>
 #include <gtk/gtk.h>
+#include "visibility.h"
 
 /* VRAM
  *
@@ -197,7 +198,7 @@ vram_bank_t _scm_to_vram_bank_t (SCM x);
 gboolean _scm_is_vram_bank_t (SCM x);
 
 /** Register VRAM procedures with the script engine. */
-void burro_canvas_vram_init_guile_procedures (void);
+DLL_LOCAL void canvas_vram_init_guile_procedures (void);
 
 enum {
     VRAM_COLUMN_NAME,                /* The name of the bank, like "VRAM A" */
@@ -207,7 +208,7 @@ enum {
     VRAM_N_COLUMNS
 };
 
-GtkListStore *vram_info_list_store_new();
+DLL_PUBLIC GtkListStore *vram_info_list_store_new();
 void vram_info_list_store_update(GtkListStore *list_store);
 
 int vram_get_type (int z);

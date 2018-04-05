@@ -1,5 +1,5 @@
-#include "x/xgdk-pixbuf.h"
-#include "burro_canvas_vram.h"
+#include "canvas_vram.h"
+#include "canvas_lib.h"
 
 /*  vram.c
 
@@ -20,9 +20,8 @@
     along with Burro Engine.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-// #include "x.h"
-#include "x/xglib.h"
-#include "burro_canvas_vram.h"
+#include "canvas_vram.h"
+#include "canvas_lib.h"
 
 uint32_t vram_ABCD_store[VRAM_ABCD_U32_SIZE] __attribute__((aligned(32))) ;
 uint32_t vram_EFGHIJ_store[VRAM_EFGHIJ_U32_SIZE] __attribute__((aligned(32))) ;
@@ -481,6 +480,7 @@ vram_audio_close (void *context)
 {
     vram_io_context_t *io = (vram_io_context_t *) context;
     io->open = FALSE;
+    return 0;
 }
 
 long
@@ -650,10 +650,10 @@ of supported formats.")
 }
 
 void
-burro_canvas_vram_init_guile_procedures (void)
+canvas_vram_init_guile_procedures (void)
 {
 #ifndef SCM_MAGIC_SNARFER
-#include "burro_canvas_vram.x"
+#include "canvas_vram.x"
 #endif
     scm_c_export (
         "VRAM_A",

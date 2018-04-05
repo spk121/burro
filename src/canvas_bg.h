@@ -1,5 +1,5 @@
-#ifndef BURRO_CANVAS_BG_H
-#define BURRO_CANVAS_BG_H
+#ifndef CANVAS_BG_H
+#define CANVAS_BG_H
 /*  bg.h
 
     Copyright (C) 2013, 2014, 2018   Michael L. Gran
@@ -36,11 +36,13 @@
 
 #include <gtk/gtk.h>
 #include <libguile.h>
+#include "visibility.h"
+
 /* #include <stdbool.h> */
 /* #include <stdint.h> */
 /* #include "../x.h" */
 /* #include "matrix.h" */
-#include "burro_canvas_vram.h"
+#include "canvas_vram.h"
 
 /** The number of background layers for the main screen */
 #define BG_BACKGROUNDS_COUNT 4
@@ -211,7 +213,7 @@ cairo_surface_t *bg_get_cairo_surface (bg_index_t id);
 
 gboolean bg_is_dirty(int z);
 
-void burro_canvas_bg_init_guile_procedures (void);
+DLL_LOCAL void canvas_bg_init_guile_procedures (void);
 void bg_fini(void);
 #endif
 

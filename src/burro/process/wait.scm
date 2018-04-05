@@ -17,6 +17,7 @@
 
 (define (wait-process milliseconds)
   (let ((self (make-base-process)))
+    (set-name! self "wait")
     (set-type! self PROC_WAIT)
     (var-set! self 'start 0)
     (var-set! self 'stop milliseconds)

@@ -1,8 +1,9 @@
-#ifndef BURRO_CANVAS_AUDIO_H
-#define BURRO_CANVAS_AUDIO_H
+#ifndef CANVAS_AUDIO_H
+#define CANVAS_AUDIO_H
 
 #include <pulse/pulseaudio.h>
 #include <pulse/glib-mainloop.h>
+#include "visibility.h"
 
 /*-----------------------------------------------------------------------------
         audio_model.h
@@ -214,7 +215,7 @@ SCM G_audio_last_update_time ();
 const int16_t *audio_model_get_wave(double time_start, size_t n);
 
 
-void am_init_guile_procedures (void);
+DLL_LOCAL void canvas_audio_init_guile_procedures ();
 
 
 /*  pulseaudio.h
@@ -258,9 +259,7 @@ void tone(int channel, double start_time,
 
 void pulse_mainloop(void);
 
-int
-burro_canvas_audio_iterate();
-
+DLL_PUBLIC int canvas_audio_iterate();
 
 #endif
 

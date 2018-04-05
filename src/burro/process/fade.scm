@@ -35,6 +35,7 @@ fade to black, if it is false, we do an inverse fade from black to
 normal intensity."
   (let ((self (make-base-process)))
     ;; (pk "fadeprocess" self)
+    (set-name! self "fade")
     (set-type! self PROC_SCREEN)
     (var-set! self 'start 0)
     (var-set! self 'stop milliseconds)

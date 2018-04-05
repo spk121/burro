@@ -2,11 +2,10 @@
 #include <gtk/gtk.h>
 #include <libguile.h>
 
-#include "x/xcairo.h"
-#include "x/xglib.h"
-#include "burro_canvas.h"
-#include "burro_canvas_colors.h"
-#include "burro_canvas_bg.h"
+#include "canvas.h"
+#include "canvas_colors.h"
+#include "canvas_bg.h"
+#include "canvas_lib.h"
 
 struct _BurroCanvas
 {
@@ -34,8 +33,7 @@ G_DEFINE_TYPE(BurroCanvas, burro_canvas, GTK_TYPE_DRAWING_AREA);
 BurroCanvas *canvas_cur = NULL;
 
 static gboolean
-burro_canvas_draw (GtkWidget *widget,
-                   cairo_t *cr)
+canvas_draw (GtkWidget *widget, cairo_t *cr)
 {
     BurroCanvas *canvas = BURRO_CANVAS(widget);
 
@@ -133,7 +131,7 @@ static void paint_transformed_image (cairo_t *context,
     cairo_set_matrix (context, matrix);
 
     /* Now copy it to the screen */
-    cairo_set_source_surface (context, surface, BURRO_CANVAS_MARGIN, BURRO_CANVAS_MARGIN);
+    cairo_set_source_surface (context, surface, CANVAS_MARGIN, CANVAS_MARGIN);
     cairo_paint (context);
 
     /* Restore the coordinate system to normal */
@@ -167,7 +165,7 @@ static void draw_textbox()
                           0.7 * canvas_cur->brightness,
                           0.7 * canvas_cur->brightness,
                           0.7 * canvas_cur->brightness);
-    cairo_move_to(canvas_cur->context, BURRO_CANVAS_MARGIN, BURRO_CANVAS_MARGIN);
+    cairo_move_to(canvas_cur->context, CANVAS_MARGIN, CANVAS_MARGIN);
     pango_cairo_show_layout (canvas_cur->context, canvas_cur->layout);
     cairo_restore(canvas_cur->context);
 }
@@ -179,7 +177,7 @@ static void draw ()
     if (canvas_cur->blank_flag)
         goto end_draw;
 
-    for (int z = BURRO_CANVAS_ZLEVEL_COUNT - 1; z >= 0; z --)
+    for (int z = CANVAS_ZLEVEL_COUNT - 1; z >= 0; z --)
     {
         if (bg_is_shown (z))
             draw_background_layer (z);
@@ -198,7 +196,7 @@ static void draw ()
     }
 #endif
 
-    for (int priority = BURRO_CANVAS_ZLEVEL_COUNT - 1; priority >= 0; priority --)
+    for (int priority = CANVAS_ZLEVEL_COUNT - 1; priority >= 0; priority --)
     {
         if (canvas_cur->layout_flag && (canvas_cur->layout_priority == priority))
             draw_textbox ();
@@ -222,16 +220,16 @@ burro_canvas_init (BurroCanvas *win)
                            | GDK_POINTER_MOTION_MASK);
 
     gtk_widget_set_size_request(GTK_WIDGET(win),
-                                BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
-                                BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
+                                CANVAS_WIDTH + 2 * CANVAS_MARGIN,
+                                CANVAS_HEIGHT + 2 * CANVAS_MARGIN);
 
     win->blank_flag = FALSE;
     win->colorswap_flag = FALSE;
     win->brightness = 1.0;
 
     win->surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32,
-                                               BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
-                                               BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
+                                               CANVAS_WIDTH + 2 * CANVAS_MARGIN,
+                                               CANVAS_HEIGHT + 2 * CANVAS_MARGIN);
     win->context = cairo_create (win->surface);
     cairo_set_antialias (win->context, CAIRO_ANTIALIAS_NONE);
 
@@ -246,8 +244,8 @@ burro_canvas_init (BurroCanvas *win)
     pango_font_description_free (desc);
 
     /* Set up word wrapping. */
-    pango_layout_set_width (win->layout, BURRO_CANVAS_WIDTH * PANGO_SCALE);
-    pango_layout_set_height (win->layout, BURRO_CANVAS_HEIGHT * PANGO_SCALE);
+    pango_layout_set_width (win->layout, CANVAS_WIDTH * PANGO_SCALE);
+    pango_layout_set_height (win->layout, CANVAS_HEIGHT * PANGO_SCALE);
     pango_layout_set_wrap (win->layout, PANGO_WRAP_WORD_CHAR);
     
     win->tick_cb_id = gtk_widget_add_tick_callback (GTK_WIDGET(win),
@@ -265,15 +263,14 @@ burro_canvas_init (BurroCanvas *win)
 // Do I need delete here? The docs say "Signal emitted if a user
 // requests that a toplevel window is closed".
 static gboolean
-burro_canvas_delete (GtkWidget *widget,
-                     GdkEventAny *eveny)
+canvas_delete (GtkWidget *widget, GdkEventAny *eveny)
 {
     gtk_widget_destroy (widget);
     return TRUE;
 }
 
 static void
-burro_canvas_dispose (GObject *object)
+canvas_dispose (GObject *object)
 {
     BurroCanvas *win;
 
@@ -307,20 +304,20 @@ burro_canvas_class_init (BurroCanvasClass *class)
     GtkWidgetClass *gtkclass = GTK_WIDGET_CLASS (class);
     GObjectClass *gclass = G_OBJECT_CLASS(class);
 
-    gclass->dispose = burro_canvas_dispose;
+    gclass->dispose = canvas_dispose;
 
     /* basics */
-    gtkclass->draw = burro_canvas_draw;
+    gtkclass->draw = canvas_draw;
     
     /* events */
-    gtkclass->delete_event = burro_canvas_delete;
+    gtkclass->delete_event = canvas_delete;
     
 }
 
 BurroCanvas *
 burro_canvas_new ()
 {
-    return g_object_new (BURRO_TYPE_CANVAS, "canvas", NULL);
+    return g_object_new (BURRO_TYPE_CANVAS, NULL);
 }
 
 cairo_t *
@@ -330,7 +327,7 @@ get_canvas_context_cur()
 }
 
 
-SCM_DEFINE(G_burro_canvas_set_blank, "set-blank", 1, 0, 0, (SCM flag), "\
+SCM_DEFINE(G_canvas_set_blank, "set-blank", 1, 0, 0, (SCM flag), "\
 Given a FLAG, this sets the canvas's blank parameter.  When blank is\n\
 #t, the canvas is drawn.  When it is #f, it is just the background\n\
 color.")
@@ -346,7 +343,7 @@ color.")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(G_burro_canvas_get_blank, "get-blank", 0, 0, 0, (void), "\
+SCM_DEFINE(G_canvas_get_blank, "get-blank", 0, 0, 0, (void), "\
 Returns the canvas's blank parameter.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
@@ -354,7 +351,7 @@ Returns the canvas's blank parameter.")
     return scm_from_bool (canvas_cur->blank_flag);
 }
 
-SCM_DEFINE(G_burro_canvas_set_colorswap, "set-colorswap", 1, 0, 0, (SCM flag), "\
+SCM_DEFINE(G_canvas_set_colorswap, "set-colorswap", 1, 0, 0, (SCM flag), "\
 Given a FLAG, this sets the canvas's colorswap parameter.  When\n\
 colorswap is #t, the canvas is drawn with red and blue swapped.  When\n\
 it is #f, is is draw normally.")
@@ -370,7 +367,7 @@ it is #f, is is draw normally.")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(G_burro_canvas_get_colorswap, "get-colorswap", 0, 0, 0, (void), "\
+SCM_DEFINE(G_canvas_get_colorswap, "get-colorswap", 0, 0, 0, (void), "\
 Returns the canvas's colorswap parameter.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
@@ -378,7 +375,7 @@ Returns the canvas's colorswap parameter.")
     return scm_from_bool (canvas_cur->colorswap_flag);
 }
 
-SCM_DEFINE(G_burro_canvas_set_brightness, "set-brightness", 1, 0, 0, (SCM val), "\
+SCM_DEFINE(G_canvas_set_brightness, "set-brightness", 1, 0, 0, (SCM val), "\
 This adjusts the brightness of the canvas. Useful values are between\n\
 0.1 (dark) and about 2.0 (probably saturated), where 1.0 is normal\n\
 brightness.")
@@ -396,7 +393,7 @@ brightness.")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(G_burro_canvas_get_brightness, "get-brightness", 0, 0, 0, (void), "\
+SCM_DEFINE(G_canvas_get_brightness, "get-brightness", 0, 0, 0, (void), "\
 Returns the canvas's brightness parameter.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
@@ -404,7 +401,7 @@ Returns the canvas's brightness parameter.")
     return scm_from_double (canvas_cur->brightness);
 }
 
-SCM_DEFINE(G_burro_canvas_set_backdrop, "set-backdrop", 1, 0, 0, (SCM s_color), "\
+SCM_DEFINE(G_canvas_set_backdrop, "set-backdrop", 1, 0, 0, (SCM s_color), "\
 Given a 32-bit RGB colorval, this sets the canvas backdrop to that color.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
@@ -413,7 +410,7 @@ Given a 32-bit RGB colorval, this sets the canvas backdrop to that color.")
     {
         char *color = scm_to_utf8_string (s_color);
         guint32 colorval;
-        gboolean found = burro_canvas_lookup_colorval (color, &colorval);
+        gboolean found = canvas_lookup_colorval (color, &colorval);
         if (found)
         {
             canvas_cur->backdrop = colorval;
@@ -431,7 +428,7 @@ Given a 32-bit RGB colorval, this sets the canvas backdrop to that color.")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(G_burro_canvas_get_backdrop, "get-backdrop", 0, 0, 0, (void), "\
+SCM_DEFINE(G_canvas_get_backdrop, "get-backdrop", 0, 0, 0, (void), "\
 Returns a 32-bit RGB color, which is the canvas backdrop color.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
@@ -439,7 +436,7 @@ Returns a 32-bit RGB color, which is the canvas backdrop color.")
     return scm_from_uint32 (canvas_cur->backdrop);
 }
 
-SCM_DEFINE(G_burro_canvas_set_markup, "set-markup", 1, 0, 0, (SCM s_str), "\
+SCM_DEFINE(G_canvas_set_markup, "set-markup", 1, 0, 0, (SCM s_str), "\
 Given a string, possibly with Pango-style XML markup, sets the\n\
 textbox text.")
 {
@@ -452,7 +449,7 @@ textbox text.")
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE(G_update_text_fgcolor_on_region, "update-text-fgcolor-on-region",
+SCM_DEFINE(G_canvas_update_text_fgcolor_on_region, "update-text-fgcolor-on-region",
            3, 0, 0, (SCM s_colorval, SCM begin, SCM end), "")
 {
     guint32 colorval = scm_to_uint32 (s_colorval);
@@ -476,12 +473,15 @@ SCM_DEFINE(G_update_text_fgcolor_on_region, "update-text-fgcolor-on-region",
     return SCM_UNSPECIFIED;
 }
 
-gboolean burro_canvas_xy_to_index (BurroCanvas *canvas, double x, double y, int *index, int *trailing)
+gboolean
+canvas_xy_to_index (BurroCanvas *canvas,
+                    double x, double y,
+                    int *index, int *trailing)
 {
     gboolean ret;
 
-    x -= BURRO_CANVAS_MARGIN;
-    y -= BURRO_CANVAS_MARGIN;
+    x -= CANVAS_MARGIN;
+    y -= CANVAS_MARGIN;
     x *=  PANGO_SCALE;
     y *=  PANGO_SCALE;
     ret = pango_layout_xy_to_index (canvas_cur->layout, x, y, index, trailing);
@@ -490,19 +490,19 @@ gboolean burro_canvas_xy_to_index (BurroCanvas *canvas, double x, double y, int 
 
     /* The UTF-8 index needs to be converted into UTF32 index. */
     const char *str = pango_layout_get_text (canvas_cur->layout);
-    char *p = str;
+    int i = 0;
     int offset = 0;
-    while (p < str + *index)
+    while (i < *index)
     {
-        p = g_utf8_next_char(p);
+        i = g_utf8_next_char(str + i) - str;
         offset++;
     }
     *index = offset;
     return TRUE;
 }
 
-SCM_DEFINE(G_burro_canvas_position_to_string_index,
-           "mouse-position-to-string-index", 2, 0, 0, (SCM s_x, SCM s_y), "\
+SCM_DEFINE(G_canvas_position_to_string_index,
+           "position-to-string-index", 2, 0, 0, (SCM s_x, SCM s_y), "\
 Converts a location in pixel coordinates to a codepoint index of a\n\
 textbox's text. Returns #f if the position is not near a character,\n\
 or an codepoint index otherwise.")
@@ -516,11 +516,11 @@ or an codepoint index otherwise.")
 
     /* The UTF-8 index needs to be converted into UTF32 index. */
     const char *str = pango_layout_get_text (canvas_cur->layout);
-    char *p = str;
+    int i = 0;
     int offset = 0;
-    while (p - str < index)
+    while (i < index)
     {
-        p = g_utf8_next_char(p);
+        i = g_utf8_next_char(str + i) - str;
         offset++;
     }
     
@@ -530,13 +530,13 @@ or an codepoint index otherwise.")
 
 
 void
-burro_canvas_init_guile_procedures ()
+canvas_init_guile_procedures ()
 {
-    burro_canvas_vram_init_guile_procedures ();
-    burro_canvas_bg_init_guile_procedures ();
-    audio_init_guile();
+    canvas_vram_init_guile_procedures ();
+    canvas_bg_init_guile_procedures ();
+    canvas_audio_init_guile_procedures();
 #ifndef SCM_MAGIC_SNARFER
-#include "burro_canvas.x"
+#include "canvas.x"
 #endif
     scm_c_export ("set-blank",
                   "get-blank",
@@ -547,7 +547,7 @@ burro_canvas_init_guile_procedures ()
                   "set-backdrop",
                   "get-backdrop",
                   "set-markup",
-                  "mouse-position-to-string-index",
+                  "position-to-string-index",
                   "update-text-fgcolor-on-region",
                   NULL);
 }

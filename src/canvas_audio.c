@@ -1,13 +1,10 @@
-#include "burro_canvas_audio.h"
+#include "canvas_audio.h"
 
+#include <math.h>
 #include <stdlib.h>
 #include <vorbis/vorbisfile.h>
-#include "x/xpulseaudio.h"
-#ifdef USE_GLIB_MAINLOOP
-#include <pulse/glib-mainloop.h>
-#endif
-#include "burro_canvas_vram.h"
-#include <math.h>
+#include "canvas_lib.h"
+#include "canvas_vram.h"
 
 #define BURRO_PROP_MEDIA_ROLE "game"
 #define BURRO_PROP_APPLICATION_ID "com.lonelycactus.burroengine"
@@ -449,9 +446,11 @@ void pulse_finalize_audio()
 }
 
 int
-burro_canvas_audio_iterate()
+canvas_audio_iterate()
 {
-    return pa_mainloop_iterate (pulse.loop, 0, NULL);
+    if (pulse.loop)
+        return pa_mainloop_iterate (pulse.loop, 0, NULL);
+    return -1;
 }
 
 SCM_DEFINE(G_audio_channel_play, "audio-channel-play", 2, 0, 0, (SCM s_channel, SCM s_vram), "\
@@ -566,14 +565,14 @@ Set the main volume for the audio.\n")
 }
 
 void
-audio_init_guile()
+canvas_audio_init_guile_procedures()
 {
     am.volume = 1.0;
     am.playing = TRUE;
     for (int i = 0; i < 4; i ++)
         am.channels[i].volume = 1.0;
 #ifndef SCM_MAGIC_SNARFER
-#include "burro_canvas_audio.x"
+#include "canvas_audio.x"
 #endif
     scm_c_export ("audio-channel-play",
                   "audio-channel-pause",
