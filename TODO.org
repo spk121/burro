@@ -3,7 +3,8 @@
 * Engine
 ** DONE Audio file unpacking
    Went with vorbisfile.
-** Put pulseaudio loop in game loop
+** DONE Put pulseaudio loop in game loop
+   So pause works and duty cycle works.
 ** Better directory and game loading handling
    Where should we be looking for jpg, png, and opus files?
    What is doctrinaire?  What is safe?
@@ -12,17 +13,19 @@
    - the directory where the script is.
    - or the user data dir $HOME/.local/share/burro
    - or the standard data dirs /usr/local/share/burro or /usr/share/burro
-** API vs internal linking
+** TODO API vs internal linking
    Need to do the whole __visibility__((default)__,
    __declspec(dllexport) thing.
 ** Guile port handling
-** The big BG rewrite
+** TODO The big BG rewrite
    BG is a mess.
-** Debugger
+** Sandbox Debugger
+*** Recheck the entry points so that the debugger is only for sandbox
 *** Make the debugger its own window
 *** BG properties
+*** Audio properties
 *** Textbox properties and action hotspots
-*** watch
+*** Watch
 ** Make pretty
 ** Wisp support
 ** VRAM stability
@@ -32,6 +35,7 @@
 ** C catch handler
    The catch handler in burro_lisp.c doesn't handle all tag types.
 * Scheme library
+** display, write, and format for sandbox
 ** Twine helper functions
 * Game
 ** Prototype game in Twine
