@@ -52,7 +52,7 @@ GUILE_SITE_DIR
 
 AC_ARG_VAR([GUILE_SNARF], [guile snarf compilation tool])
 _guile_suffix=`echo "$GUILE" | sed -e 's,^.*/guile\(.*\)$,\1,'`
-AC_PATH_PROG([GUILE_SNARF],[guile-snarf$_guile_suffix])
+AC_CHECK_PROGS([GUILE_SNARF],[guile-snarf$_guile_suffix guile$_guile_suffix-snarf])
 AS_IF([test "x$GUILE_SNARF" = "xno"],
       [AC_MSG_ERROR([Could not find guile-snarf$_guile_suffix tool needed for compilation])])
 

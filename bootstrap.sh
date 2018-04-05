@@ -12,8 +12,8 @@ cd $srcdir
         exit 1
 }
 
-aclocal --install || exit 1
-autoreconf --verbose --force --install -Wno-portability || exit 1
+AUTOCONF_VERSION=2.69 AUTOMAKE_VERSION=1.15 aclocal --install || exit 1
+AUTOCONF_VERSION=2.69 AUTOMAKE_VERSION=1.15 autoreconf --verbose --force --install -Wno-portability || exit 1
 
 cd $olddir
 if [ "$NOCONFIGURE" = "" ]; then

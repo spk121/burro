@@ -112,7 +112,7 @@ burro_engine_SOURCES = $(SRCS_X_H) \
  burro_repl.c burro_repl.h \
  main.c
 
-burro_engine_LDFLAGS = -Wl,--no-undefined -Wl,--no-allow-shlib-undefined, -Wl,--warn-common
+burro_engine_LDFLAGS =
 burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
 AM_CFLAGS = $(DEPS_CFLAGS) $(GUILE_CFLAGS)
 burro_engine_DEPENDENCIES = libburrocanvas.la
@@ -121,7 +121,7 @@ libburrocanvas_la_CFLAGS = -fvisibility=hidden \
 	$(DEPS_CFLAGS) \
 	$(GUILE_CFLAGS) \
 	$(VORBISFILE_CFLAGS)
-libburrocanvas_la_LDFLAGS = -no-undefined -Wl,--no-undefined -Wl,--no-allow-shlib-undefined, -Wl,--warn-common
+libburrocanvas_la_LDFLAGS = -no-undefined -Wl,--no-undefined
 libburrocanvas_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
 
 snarfcppopts = $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
