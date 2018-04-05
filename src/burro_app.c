@@ -2,6 +2,7 @@
 #include "burro_app.h"
 #include "burro_app_win.h"
 #include "burro_preferences_dialog.h"
+#include "burro_resources.h"
 
 #include <gtk/gtk.h>
 
@@ -15,8 +16,11 @@ G_DEFINE_TYPE(BurroApp, burro_app, GTK_TYPE_APPLICATION);
 static void
 action_about (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
-    BurroApp *app = BURRO_APP (user_data);
-    GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (app));
+    BurroApp *app;
+    GtkWindow *window;
+
+    app = BURRO_APP (user_data);
+    window = gtk_application_get_active_window (GTK_APPLICATION (app));
 
     g_return_if_fail (window);
 
@@ -24,11 +28,11 @@ action_about (GSimpleAction *action, GVariant *parameter, gpointer user_data)
         "Michael Gran <spk121@yahoo.com>",
         NULL
     };
-    
+
     gtk_show_about_dialog (GTK_WINDOW (window),
                            "program-name", "Burro Engine",
                            "version", PACKAGE_VERSION,
-                           "copyright", "mostly Copyright 2014-2018 Michael Gran",
+                           "copyright", "Copyright 2014-2018 Michael Gran",
                            "authors", authors,
                            "website", "https://github.com/spk121/burro",
                            "logo-icon-name", "burro-engine",
@@ -67,8 +71,8 @@ burro_app_startup (GApplication *gapp)
     g_action_map_add_action_entries (G_ACTION_MAP (app),
                                      app_entries, G_N_ELEMENTS (app_entries),
                                      app);
-    
-    builder = gtk_builder_new_from_resource ("/com/lonelycactus/burroengine/app-menu.ui");
+
+    builder = gtk_builder_new_from_resource (APP_MENU);
 
     app_menu = G_MENU_MODEL (gtk_builder_get_object (builder, "appmenu"));
     gtk_application_set_app_menu (gtkapp, app_menu);
@@ -99,9 +103,12 @@ burro_app_open (GApplication *app,
     BurroAppWindow *win;
 
     if (n_files != 1)
-        g_warning ("Asked to open %d files, but, can only open 1", n_files);
-    
-    // We can only handle one file.
+    {
+        // We can only handle one file.
+        fprintf (stderr, "Too many command-line arguments\n");
+        return;
+    }
+
     win = burro_app_window_new (BURRO_APP (app));
     burro_app_window_open (win, files[0]);
     gtk_window_present (GTK_WINDOW (win));
@@ -133,13 +140,13 @@ BurroApp *
 burro_app_new (void)
 {
     return g_object_new (BURRO_APP_TYPE,
-                         "application-id", "com.lonelycactus.burroengine",
+                         "application-id", DOMAIN,
                          "flags", (G_APPLICATION_NON_UNIQUE
                                    | G_APPLICATION_HANDLES_OPEN),
                          NULL);
 }
 
-    
+
 /*
   Local Variables:
   mode:C

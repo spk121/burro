@@ -188,7 +188,7 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkToggleButton" id="debug_pause_button">
+                          <object class="GtkToggleButton" id="pause_button">
                             <property name="label">gtk-media-pause</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -203,7 +203,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="debug_next_button">
+                          <object class="GtkButton" id="next_button">
                             <property name="label">gtk-media-next</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
@@ -218,7 +218,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkButton" id="debug_refresh_button">
+                          <object class="GtkButton" id="refresh_button">
                             <property name="label">gtk-refresh</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>

@@ -4,23 +4,14 @@
 #include "burro_app.h"
 #include "burro_app_win.h"
 #include "burro_canvas.h"
-#include "burro_repl.h"
-// #include "burro_config_keys.h"
+#include "burro_resources.h"
 #include "burro_lisp.h"
 #include "burro_debug_window.h"
+#include "burro_repl.h"
 
 #define GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS (1000000 / 60)
 #define GAME_LOOP_IDEAL_PERIOD_MICROSECONDS (1000000 / 30)
 #define GAME_LOOP_MAXIMUM_PERIOD_MICROSECONDS (1000000 / 10)
-
-enum {
-    DEBUG_COLUMN_TIME,                /* The name of the bank, like "VRAM A" */
-    DEBUG_COLUMN_NAME,
-    DEBUG_COLUMN_VALUE,
-    DEBUG_COLUMN_STACK,
-    DEBUG_N_COLUMNS
-};
-
 
 struct _BurroAppWindow
 {
@@ -29,7 +20,7 @@ struct _BurroAppWindow
     BurroCanvas *canvas;
     GtkMenuButton *gears;
     BurroDebugWindow *debug_window;
-    
+
     // The main game loop is in the idle handler.
     gboolean minimized_flag;
     gboolean maximized_flag;
@@ -44,7 +35,7 @@ struct _BurroAppWindow
     gboolean game_loop_full_speed;
     gint64 game_loop_avg_period;
     gint64 game_loop_avg_duration;
-    
+
     gboolean have_mouse_move_event;
     double mouse_move_x;
     double mouse_move_y;
@@ -55,28 +46,22 @@ struct _BurroAppWindow
     int text_move_location;
     gboolean have_text_click_event;
     int text_click_location;
-    
+
     // Guile support
-    BurroRepl *repl;
     SCM burro_module;           /* The (burro) module */
     SCM sandbox;                /* Opened files are parsed into this
                                  * anonymous module */
+    BurroRepl *repl;
+
     // Log handler
     guint log_handler_id;
 };
 
+static void signal_start_requested (GObject *obj, gpointer user_data);
+static void signal_stop_requested (GObject *obj, gpointer user_data);
+static void signal_step_requested (GObject *obj, gpointer user_data);
+static void signal_repl_requested (GObject *obj, gpointer user_data);
 
-GtkListStore *debug_peek_list_store_new()
-{
-    GtkListStore *list_store;
-
-    list_store = gtk_list_store_new (DEBUG_N_COLUMNS,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING);
-    return list_store;
-}
 
 #if 0
 void
@@ -91,7 +76,7 @@ debug_peek_list_store_update(GtkListStore *list_store)
     {
         path = gtk_tree_path_new_from_indices (i - VRAM_A, -1);
         gtk_tree_model_get_iter(GTK_TREE_MODEL (list_store), &iter, path);
-        
+
         char *siz = vram_size_string(i);
         // gtk_list_store_append (list_store, &iter);
         gtk_list_store_set (list_store, &iter,
@@ -119,8 +104,7 @@ action_open (GSimpleAction *simple,
 
     GtkFileFilter *filter = gtk_file_filter_new();
     gtk_file_filter_set_name (filter, "Burro games");
-    // gtk_file_filter_add_pattern(filter, "*.burro");
-    gtk_file_filter_add_pattern(filter, "*.scm");
+    gtk_file_filter_add_pattern(filter, "*.burro");
 
     dialog = gtk_file_chooser_dialog_new ("Load File",
                                           parent_window,
@@ -133,7 +117,7 @@ action_open (GSimpleAction *simple,
 
    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog),
                                  filter);
-                                 
+
     res = gtk_dialog_run (GTK_DIALOG (dialog));
     if (res == GTK_RESPONSE_ACCEPT)
     {
@@ -155,14 +139,30 @@ action_view_tools (GSimpleAction *simple,
                    GVariant      *parameter,
                    gpointer       user_data)
 {
-	BurroAppWindow *window;
-	gboolean visible;
+    BurroAppWindow *window;
+    gboolean visible;
 
-	window = BURRO_APP_WINDOW (user_data);
+    window = BURRO_APP_WINDOW (user_data);
 
     if (!window->debug_window)
     {
         window->debug_window = burro_debug_window_new(window);
+        g_signal_connect(window->debug_window,
+                         "start-requested",
+                         G_CALLBACK(signal_start_requested),
+                         window);
+        g_signal_connect(window->debug_window,
+                         "stop-requested",
+                         G_CALLBACK(signal_stop_requested),
+                         window);
+        g_signal_connect(window->debug_window,
+                         "step-requested",
+                         G_CALLBACK(signal_step_requested),
+                         window);
+        g_signal_connect(window->debug_window,
+                         "repl-requested",
+                         G_CALLBACK(signal_repl_requested),
+                         window);
         gtk_widget_show_all (GTK_WIDGET (window->debug_window));
     }
     else
@@ -171,21 +171,6 @@ action_view_tools (GSimpleAction *simple,
         gtk_widget_set_visible (GTK_WIDGET (window->debug_window), !visible);
     }
 }
-
-static void
-action_run_repl (GSimpleAction *simple,
-                 GVariant      *state,
-                 gpointer       user_data)
-{
-    g_critical ("action_run_repl is broken");
-	BurroAppWindow *window;
-	gboolean running;
-
-	window = BURRO_APP_WINDOW (user_data);
-
-	running = g_variant_get_boolean (state);
-}
-
 
 static GActionEntry win_entries[] =
 {
@@ -200,10 +185,10 @@ accel_action_view_tools (GtkAccelGroup *accel_group,
                          guint keyval,
                          GdkModifierType modifier)
 {
-	BurroAppWindow *window;
-	gboolean visible;
+    BurroAppWindow *window;
+    gboolean visible;
 
-	window = BURRO_APP_WINDOW (acceleratable);
+    window = BURRO_APP_WINDOW (acceleratable);
 
     if (!window->debug_window)
     {
@@ -218,53 +203,52 @@ accel_action_view_tools (GtkAccelGroup *accel_group,
     return TRUE;
 }
 
-static void
-signal_action_repl_enabled (GtkComboBox *widget,
-                            gpointer user_data)
-{
-    gint enabled = gtk_combo_box_get_active (widget);
-    if (enabled)
-    {
-        burro_repl_enable (BURRO_REPL(user_data));
-        gtk_widget_set_sensitive (GTK_WIDGET(widget), FALSE);
-    }
-}
-
-
 G_DEFINE_TYPE(BurroAppWindow, burro_app_window, GTK_TYPE_APPLICATION_WINDOW);
 
 static BurroAppWindow *app_window_cur;
 
 static gboolean
-signal_action_canvas_button_press_event (GtkWidget *widget, GdkEventButton *event,
-                                  gpointer user_data)
+signal_action_canvas_button_press_event (GtkWidget *widget,
+                                         GdkEventButton *event,
+                                         gpointer user_data)
 {
     GdkEventButton *button = event;
+
     if (button->type == GDK_BUTTON_PRESS)
     {
         app_window_cur->have_mouse_click_event = TRUE;
         app_window_cur->mouse_click_x = button->x;
         app_window_cur->mouse_click_y = button->y;
         int index, trailing;
-        if (burro_canvas_xy_to_index (app_window_cur->canvas, button->x, button->y, &index, &trailing))
+        if (burro_canvas_xy_to_index (app_window_cur->canvas,
+                                      button->x,
+                                      button->y,
+                                      &index,
+                                      &trailing))
         {
             app_window_cur->have_text_click_event = TRUE;
             app_window_cur->text_click_location = index;
         }
     }
-    
+
     return TRUE;
 }
 
 static gboolean
-signal_action_canvas_motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
+signal_action_canvas_motion_notify_event (GtkWidget *widget,
+                                          GdkEventMotion *event,
                                           gpointer user_data)
 {
+    int index, trailing;
+
     app_window_cur->have_mouse_move_event = TRUE;
     app_window_cur->mouse_move_x = event->x;
     app_window_cur->mouse_move_y = event->y;
-    int index, trailing;
-    if (burro_canvas_xy_to_index (app_window_cur->canvas, event->x, event->y, &index, &trailing))
+    if (burro_canvas_xy_to_index (app_window_cur->canvas,
+                                  event->x,
+                                  event->y,
+                                  &index,
+                                  &trailing))
     {
         app_window_cur->have_text_move_event = TRUE;
         app_window_cur->text_move_location = index;
@@ -274,28 +258,46 @@ signal_action_canvas_motion_notify_event (GtkWidget *widget, GdkEventMotion *eve
         app_window_cur->have_text_move_event = TRUE;
         app_window_cur->text_move_location = -1;
     }
-        
+
     return TRUE;
 }
 
-
 static void
-signal_debug_next (GtkButton *button, gpointer user_data)
+signal_start_requested (GObject *obj, gpointer user_data)
 {
-    app_window_cur->game_loop_step_flag = TRUE;
+    BurroAppWindow *win = user_data;
+    win->game_loop_active_flag = TRUE;
+    win->game_loop_step_flag = FALSE;
 }
 
 static void
-signal_debug_refresh (GtkButton *button, gpointer user_data)
+signal_stop_requested (GObject *obj, gpointer user_data)
 {
-    
+    BurroAppWindow *win = user_data;
+    win->game_loop_active_flag = FALSE;
+    win->game_loop_step_flag = FALSE;
+}
+
+static void
+signal_step_requested (GObject *obj, gpointer user_data)
+{
+    BurroAppWindow *win = user_data;
+    win->game_loop_active_flag = FALSE;
+    win->game_loop_step_flag = TRUE;
+}
+
+static void
+signal_repl_requested (GObject *obj, gpointer user_data)
+{
+    BurroAppWindow *win = user_data;
+    burro_repl_enable (win->repl);
 }
 
 static gboolean
 game_loop (gpointer user_data)
 {
     BurroAppWindow *win = BURRO_APP_WINDOW (user_data);
-    
+
     if (win->game_loop_quitting)
         return FALSE;
 
@@ -304,22 +306,25 @@ game_loop (gpointer user_data)
         if (win->game_loop_active_flag || win->game_loop_step_flag)
         {
             win->game_loop_step_flag = FALSE;
-            
+
             gint64 start_time = g_get_monotonic_time();
             if (win->game_loop_full_speed || ((start_time - win->game_loop_start_time) > GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS))
             {
                 win->game_loop_start_time_prev = win->game_loop_start_time;
                 win->game_loop_start_time = start_time;
                 gint64 dt = start_time - win->game_loop_start_time_prev;
-                
+
                 // If dt is too large, maybe we're resuming from a break point.
                 // Frame-lock to the target rate for this frame.
                 if (dt > GAME_LOOP_MAXIMUM_PERIOD_MICROSECONDS)
                     dt = GAME_LOOP_IDEAL_PERIOD_MICROSECONDS;
-                
+
+                // Update the audio engine
+                burro_canvas_audio_iterate();
+
                 // Update the TCP repl, if it is running
-                //repl_tick();
-                
+                repl_tick(win->repl);
+
                 // Pass any new mouse clicks and other events to the process manager
                 if (win->have_mouse_move_event)
                 {
@@ -372,7 +377,7 @@ game_loop (gpointer user_data)
                 win->game_loop_end_time = g_get_monotonic_time();
                 win->game_loop_avg_duration = ((19 * win->game_loop_avg_duration) / 20
                                                + (win->game_loop_end_time - win->game_loop_start_time) / 20);
-                
+
                 if (!(win->game_loop_frame_count % 60))
                 {
                     char *update_rate_str = g_strdup_printf("%.1f", 1000000.0 / win->game_loop_avg_period);
@@ -400,14 +405,14 @@ game_loop (gpointer user_data)
     }
     else /* minimized */
         usleep (1000);
-         
+
     return TRUE;
 }
 
 static void
 timeout_action_destroy (gpointer data)
 {
-    
+
 }
 
 static void
@@ -440,9 +445,9 @@ burro_app_window_init (BurroAppWindow *win)
     g_action_map_add_action_entries (G_ACTION_MAP (win),
                                      win_entries, G_N_ELEMENTS (win_entries),
                                      win);
-                                
+
     builder = gtk_builder_new_from_resource ("/com/lonelycactus/burroengine/gears-menu.ui");
-                                
+
     menu = G_MENU_MODEL (gtk_builder_get_object (builder, "menu"));
     gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (win->gears), menu);
     g_object_unref (builder);
@@ -457,23 +462,24 @@ burro_app_window_init (BurroAppWindow *win)
                              cl_view);
     gtk_window_add_accel_group(GTK_WINDOW (win),
                                accel);
-    
-    
+
+
     gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
-    
+
     // Set the visibility of the text box
     GAction *vdebug =
         g_action_map_lookup_action (G_ACTION_MAP (win), "view-debug");
 
     win->burro_module = burro_lisp_new ();
     win->sandbox = SCM_BOOL_F;
+    win->repl = burro_repl_new();
 
     // FIXME: how to do this properly
     // Really shrink the window down to minimal
     gtk_window_resize (GTK_WINDOW(win),
                        BURRO_CANVAS_WIDTH + 2 * BURRO_CANVAS_MARGIN,
                        BURRO_CANVAS_HEIGHT + 2 * BURRO_CANVAS_MARGIN);
-    
+
     // The game loop needs to know about mouse moves and mouse clicks
     // that specifically happen in the canvas.
     // This is for mouse clicks.
@@ -490,7 +496,7 @@ burro_app_window_init (BurroAppWindow *win)
                       "motion-notify-event",
                       G_CALLBACK (signal_action_canvas_motion_notify_event),
                       NULL);
-    
+
     // Main Game Loop
     win->game_loop_active_flag = TRUE;
     win->game_loop_quitting = FALSE;
@@ -517,8 +523,8 @@ burro_app_window_init (BurroAppWindow *win)
                                                   log_func,
                                                   NULL,
                                                   NULL);
-                                                  
-                                                  
+
+
 }
 
 // This callback is called when the window is maximizing and
@@ -529,7 +535,7 @@ burro_app_window_state (GtkWidget *widget,
                         gpointer user_data)
 {
     BurroAppWindow *win = BURRO_APP_WINDOW(widget);
-    
+
     if (win_event->new_window_state & GDK_WINDOW_STATE_ICONIFIED)
     {
         win->minimized_flag = TRUE;
@@ -552,8 +558,8 @@ burro_app_window_state (GtkWidget *widget,
 // This callback is called when the application has asked this window
 // to delete itself.
 static  gboolean
-burro_app_window_delete (GtkWidget	     *widget,
-                         GdkEventAny	     *event)
+burro_app_window_delete (GtkWidget       *widget,
+                         GdkEventAny         *event)
 {
     gtk_widget_destroy(widget);
     return TRUE;
@@ -567,7 +573,7 @@ burro_app_window_dispose (GObject *object)
 
     g_log_remove_handler (NULL, win->log_handler_id);
     g_log_set_default_handler (g_log_default_handler, NULL);
-    
+
     win->game_loop_quitting = TRUE;
 
     if (win->canvas)
@@ -578,8 +584,8 @@ burro_app_window_dispose (GObject *object)
 
     win->sandbox = SCM_BOOL_F;
     win->burro_module = SCM_BOOL_F;
-    
-    g_clear_object (&win->repl);
+
+    // g_clear_object (&win->repl);
     G_OBJECT_CLASS (burro_app_window_parent_class)->dispose (object);
 }
 
@@ -588,14 +594,13 @@ burro_app_window_class_init (BurroAppWindowClass *class)
 {
     GObjectClass *gclass = G_OBJECT_CLASS(class);
     GtkWidgetClass *gtkclass = GTK_WIDGET_CLASS (class);
-    const char window_ui[] = "/com/lonelycactus/burroengine/window.ui";
-    
+
     gclass->dispose = burro_app_window_dispose;
 
     gtkclass->delete_event = burro_app_window_delete;
     gtkclass->window_state_event = burro_app_window_state;
 
-    gtk_widget_class_set_template_from_resource (gtkclass, window_ui);
+    gtk_widget_class_set_template_from_resource (gtkclass, APP_WINDOW);
 
     gtk_widget_class_bind_template_child (gtkclass, BurroAppWindow, canvas);
     gtk_widget_class_bind_template_child (gtkclass, BurroAppWindow, gears);
@@ -606,7 +611,7 @@ burro_app_window_new (BurroApp *app)
 {
     app_window_cur = g_object_new (BURRO_APP_WINDOW_TYPE, "application", app, NULL);
     return app_window_cur;
-}    
+}
 
 void
 burro_app_window_open (BurroAppWindow *win,
@@ -618,7 +623,7 @@ burro_app_window_open (BurroAppWindow *win,
     if (scm_is_false (win->sandbox))
     {
         char *filename = g_file_get_basename (file);
-        
+
         GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
         GtkWidget *dialog = gtk_message_dialog_new (GTK_WINDOW (win),
                                          flags,
@@ -643,6 +648,7 @@ burro_app_window_eval_string_in_sandbox (const char *txt)
                          scm_from_utf8_string(txt),
                          app_window_cur->sandbox);
     char *output = scm_to_utf8_string (ret);
+    return output;
 }
 
 gboolean
@@ -656,6 +662,19 @@ burro_app_window_set_active_flag(gboolean x)
 {
     app_window_cur->game_loop_active_flag = x;
 }
+
+gboolean
+burro_app_window_get_step_flag()
+{
+    return app_window_cur->game_loop_step_flag;
+}
+
+void
+burro_app_window_set_step_flag(gboolean x)
+{
+    app_window_cur->game_loop_step_flag = x;
+}
+
 
 SCM_DEFINE (G_burro_app_win_get_sandbox, "get-sandbox", 0, 0, 0,
             (void), "\
@@ -698,4 +717,3 @@ burro_app_win_init_guile_procedures ()
   indent-tabs-mode:nil
   End:
 */
-

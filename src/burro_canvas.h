@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <gtk/gtk.h>
 #include "burro_canvas_vram.h"
+#include "burro_canvas_audio.h"
 
 #define BURRO_TYPE_CANVAS (burro_canvas_get_type ())
 G_DECLARE_FINAL_TYPE (BurroCanvas, burro_canvas, BURRO, CANVAS, GtkDrawingArea)

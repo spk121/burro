@@ -15,6 +15,8 @@ void     burro_app_window_open (BurroAppWindow *win,
 char *   burro_app_window_eval_string_in_sandbox (const char *str);
 gboolean burro_app_window_get_active_flag();
 void     burro_app_window_set_active_flag(gboolean x);
+gboolean burro_app_window_get_step_flag();
+void     burro_app_window_set_step_flag(gboolean x);
 
 
 void burro_app_win_init_guile_procedures (void);

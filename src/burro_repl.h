@@ -9,5 +9,6 @@ G_DECLARE_FINAL_TYPE (BurroRepl, burro_repl, BURRO, REPL, GObject)
 BurroRepl *burro_repl_new ();
 
 void burro_repl_enable (BurroRepl *repl);
+void repl_tick (BurroRepl *repl);
 
 #endif

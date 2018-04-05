@@ -258,6 +258,10 @@ void tone(int channel, double start_time,
 
 void pulse_mainloop(void);
 
+int
+burro_canvas_audio_iterate();
+
+
 #endif
 
 #endif

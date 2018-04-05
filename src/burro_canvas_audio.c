@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <vorbis/vorbisfile.h>
 #include "x/xpulseaudio.h"
+#ifdef USE_GLIB_MAINLOOP
 #include <pulse/glib-mainloop.h>
+#endif
 #include "burro_canvas_vram.h"
 #include <math.h>
 
@@ -59,7 +61,11 @@ typedef struct audio_model_tag {
 typedef struct pulse_priv_tag {
     pa_context_state_t state;
     pa_context *context;
+#ifdef USE_GLIB_MAINLOOP
     pa_glib_mainloop *loop;
+#else
+    pa_mainloop *loop;
+#endif
     gboolean finalize;
     unsigned samples_written;
 } pulse_priv_t;
@@ -316,9 +322,14 @@ void pulse_initialize_audio_step_1()
 {
     pa_mainloop_api *vtable = NULL;
     pa_proplist *main_proplist = NULL;
-
+    
+#ifdef USE_GLIB_MAINLOOP
     pulse.loop = xpa_glib_mainloop_new (g_main_context_default());
     vtable = pa_glib_mainloop_get_api (pulse.loop);
+#else
+    pulse.loop = pa_mainloop_new ();
+    vtable = xpa_mainloop_get_api (pulse.loop);
+#endif
 
     /* PROPLIST: Only the PA_PROP_MEDIA_ROLE is important.  */
     main_proplist = xpa_proplist_new();
@@ -428,9 +439,19 @@ void pulse_initialize_audio_step_2(pa_context *context)
 /* This finalizer is called if we are shutting down cleanly */
 void pulse_finalize_audio()
 {
+#ifdef USE_GLIB_MAINLOOP    
     pa_glib_mainloop_free (pulse.loop);
+#else
+    pa_mainloop_free (pulse.loop);
+#endif
     pulse.finalize = TRUE;
     g_debug("PulseAudio finalization complete");
+}
+
+int
+burro_canvas_audio_iterate()
+{
+    return pa_mainloop_iterate (pulse.loop, 0, NULL);
 }
 
 SCM_DEFINE(G_audio_channel_play, "audio-channel-play", 2, 0, 0, (SCM s_channel, SCM s_vram), "\
