@@ -31,7 +31,7 @@ character locations.  If those character locations have associated
 actions, they are activated."
   (lambda (time x y)
     ;; (format #t "BUTTON PRESS HANDLER ~s ~s ~s~%" time x y)
-    (let ((index (mouse-position-to-string-index x y)))
+    (let ((index (position-to-string-index x y)))
       (when index
 	(let ((action-thunk (find-action actions index)))
 	  (when action-thunk
