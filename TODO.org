@@ -37,6 +37,7 @@
 ** Valgrind: Change canvas->surface to have static data store?
    Use cairo_image_surface_create_for_data() and a static
    data store.
+** Keep a console store and watch store even when debug window hidden
 * Scheme library
 ** display, write, and format for sandbox
 ** Twine helper functions
