@@ -1,0 +1,87 @@
+;; -*- mode: scheme -*-
+(bg-reset BG_1)
+
+(define (One)
+  (clickable-text
+   `(markup
+     "This is a basic piece of text using the default "
+     "colors and the default font.  It has one clickable "
+     "link.  Notice how there is a bit of a mouseover effect "
+     "and some fadeout.  Fancy.\n\n"
+     (a (@ (action ,Two)) "click me"))))
+
+(define (Two)
+  (clickable-text
+   `(markup
+     "Right now, we're using a driver called "
+     (span (@ (font "Courier")) "clickable-text")
+     ".  This driver has some convenient font decorations.\n"
+     (b " BOLD ")
+     (big " BIG\n")
+     (i " ITALIC ")
+     (s " STRIKETHROUGH\n")
+     (sup " SUPERSCRIPT ")
+     (sub " SUBSCRIPT\n")
+     (small " SMALL ")
+     (tt " MONOSPACE\n")
+     (u " UNDERLINE ")
+     "\n\n"
+     (a (@ (action ,Three)) "click me"))))
+
+(define (Three)
+  (clickable-text
+   `(markup
+     "The "
+     (span (@ (font "Courier")) "clickable-text")
+     " driver has other font decorations.\n"
+     (span (@ (font "Sans")) " Different font\n")
+     (span (@ (fgcolor "#FF00FF")) " Foreground Color\n")
+     (span (@ (bgcolor "#FFFF00")) " Background Color\n")
+     "\n\n"
+     (a (@ (action ,Four)) "click me"))))
+
+(define (Four)
+  (set-font "Fira Sans 16,Sans 16")
+  (set-font-color "yellow3")
+  (clickable-text
+   `(markup
+     "You can also set the default font and font foreground color "
+     "for the rest of the game with the "
+     (span (@ (font "Courier")) "set-font")
+     " and "
+     (span (@ (font "Courier")) "set-font-color")
+     " commands\n\n"
+     "\n\n"
+     (a (@ (action ,Five)) "click me"))))
+
+(define (Five)
+  (set-backdrop "DarkSlateGray4")
+  (clickable-text
+   `(markup
+     "You can imagine each screen a series of layers.  On the "
+     "top layer is this here text.  On the bottom layer, behind "
+     "the text is the "
+     (span (@ (font "Courier")) "backdrop")
+     ". You can set the color of "
+     "the backdrop with the "
+     (span (@ (font "Courier")) "set-backdrop")
+     " command."
+     "\n\n"
+     (a (@ (action ,Six)) "click me"))))
+
+(define (Six)
+  (load-image-file "../game/shop.jpg" VRAM_A)
+  (bg-setup BG_1 VRAM_A)
+  (bg-set-brightness 0.4)
+  (set-font-color "green")
+  (clickable-text
+   `(markup
+     "In between the text on top and the backdrop on the bottom, "
+     "there is the "
+     (i "background")
+     ".\n"
+     "You can place images there."
+     "\n\n"
+     (a (@ (action ,One)) "click me"))))
+
+(Six)

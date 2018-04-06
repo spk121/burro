@@ -20,6 +20,11 @@
 #include "canvas_bg.h"
 #include "canvas_lib.h"
 
+#define CANVAS_WIDTH 512
+#define CANVAS_HEIGHT 384
+#define CANVAS_MARGIN 50
+
+
 /** Information about a single layer of a multi-layer background. */
 typedef struct
 {
@@ -115,29 +120,33 @@ bg_render_bmp_to_cairo_surface (bg_index_t id);
 
 ////////////////
 
-gboolean bg_validate_int_as_bg_index_t (int x)
+static gboolean
+bg_validate_int_as_bg_index_t (int x)
 {
     return (x >= (int) BG_0 && x <= (int) BG_3);
 }
 
-gboolean bg_validate_int_as_bg_type_t (int x)
+static gboolean
+bg_validate_int_as_bg_type_t (int x)
 {
     return (x >= (int) BG_TYPE_NONE && x <= (int) BG_TYPE_BMP);
 }
 
-gboolean bg_validate_bg_index_t (bg_index_t x)
+static gboolean
+bg_validate_bg_index_t (bg_index_t x)
 {
     return (x >= BG_0 && x <= BG_3);
 }
 
-const char *
+static const char *
 bg_get_index_name (bg_index_t index)
 {
     g_assert (bg_validate_bg_index_t (index));
     return bg_index_name[index];
 }
 
-void bg_init ()
+void
+canvas_bg_init ()
 {
     bg.colorswap = FALSE;
     bg.brightness = 1.0;
@@ -162,14 +171,32 @@ void bg_init ()
     }
 }
 
+cairo_surface_t *
+canvas_bg_get_cairo_surface (bg_index_t id)
+{
+    g_assert (bg.bg[id].type != BG_TYPE_NONE);
+    g_assert (bg.surf[id] != NULL);
+    g_assert (cairo_surface_get_reference_count (bg.surf[id]) > 0);
+    g_assert (cairo_surface_get_reference_count (bg.surf[id]) < 10);
+
+    return bg.surf[id];
+}
+
+
 gboolean
-bg_is_dirty (int z)
+canvas_bg_is_dirty (bg_index_t z)
 {
     return bg.bg[z].dirty;
 }
 
+gboolean
+canvas_bg_set_clean (bg_index_t z)
+{
+    bg.bg[z].dirty = FALSE;
+}
+
 void
-bg_fini (void)
+canvas_bg_fini (void)
 {
     for (int id = 0; id < BG_BACKGROUNDS_COUNT; id ++)
     {
@@ -223,24 +250,19 @@ adjust_colorval (uint32_t c32)
 }
 
 gboolean
-bg_is_shown (bg_index_t id)
+canvas_bg_is_shown (bg_index_t id)
 {
     return bg.bg[id].enable;
 }
 
-#if 0
-const uint32_t *bg_get_data_ptr (bg_index_t id)
-{
-    return bg.bg[id].storage;
-}
-#endif
-
-void bg_hide (bg_index_t id)
+static void
+bg_hide (bg_index_t id)
 {
     bg.bg[id].enable = FALSE;
 }
 
-void bg_reset (bg_index_t id)
+static void
+bg_reset (bg_index_t id)
 {
     bg.bg[id].enable = FALSE;
     bg.bg[id].type = BG_TYPE_NONE;
@@ -252,20 +274,23 @@ void bg_reset (bg_index_t id)
     bg.bg[id].rotation = 0.0;
 }
 
-void bg_rotate (bg_index_t id, double angle)
+static void
+bg_rotate (bg_index_t id, double angle)
 {
     bg.bg[id].rotation += angle;
 }
 
-void bg_scroll (bg_index_t id, double dx, double dy)
+static void
+bg_scroll (bg_index_t id, double dx, double dy)
 {
     bg.bg[id].scroll_x += dx;
     bg.bg[id].scroll_y += dy;
 }
 
-void bg_set (bg_index_t id, double rotation, double expansion,
-             double scroll_x, double scroll_y,
-             double rotation_center_x, double rotation_center_y)
+static void
+bg_set (bg_index_t id, double rotation, double expansion,
+        double scroll_x, double scroll_y,
+        double rotation_center_x, double rotation_center_y)
 {
     bg.bg[id].rotation = rotation;
     bg.bg[id].expansion = expansion;
@@ -275,57 +300,40 @@ void bg_set (bg_index_t id, double rotation, double expansion,
     bg.bg[id].rotation_center_y = rotation_center_y;
 }
 
-void bg_set_expansion (bg_index_t id, double expansion)
+static void
+bg_set_expansion (bg_index_t id, double expansion)
 {
     bg.bg[id].expansion = expansion;
 }
 
-void bg_set_rotation (bg_index_t id, double rotation)
+static void
+bg_set_rotation (bg_index_t id, double rotation)
 {
     bg.bg[id].rotation = rotation;
 }
 
-void bg_set_rotation_center (bg_index_t id,
-                             double rotation_center_x, double rotation_center_y)
+static void
+bg_set_rotation_center (bg_index_t id,
+                        double rotation_center_x, double rotation_center_y)
 {
     bg.bg[id].rotation_center_x = rotation_center_x;
     bg.bg[id].rotation_center_y = rotation_center_y;
 }
 
-void bg_set_rotation_expansion (bg_index_t id, double rotation, double expansion)
+static void
+bg_set_rotation_expansion (bg_index_t id, double rotation, double expansion)
 {
     bg.bg[id].rotation = rotation;
     bg.bg[id].expansion = expansion;
 }
 
-void bg_show (bg_index_t id)
+static void
+bg_show (bg_index_t id)
 {
     g_assert (bg.bg[id].type != BG_TYPE_NONE);
 
     bg.bg[id].enable = TRUE;
 }
-
-cairo_surface_t *
-bg_get_cairo_surface (bg_index_t id)
-{
-    g_assert (bg.bg[id].type != BG_TYPE_NONE);
-    g_assert (bg.surf[id] != NULL);
-    g_assert (cairo_surface_get_reference_count (bg.surf[id]) > 0);
-    g_assert (cairo_surface_get_reference_count (bg.surf[id]) < 10);
-
-    return bg.surf[id];
-}
-
-#if 0
-static void
-bg_update (bg_index_t id)
-{
-    if (bg.surf[id] != NULL)
-        cairo_surface_destroy (bg.surf[id]);
-    bg.surf[id] = bg_render_to_cairo_surface (id);
-}
-#endif
-
 
 static cairo_surface_t *
 bg_render_to_cairo_surface (bg_index_t id)
@@ -364,16 +372,7 @@ bg_render_bmp_to_cairo_surface (bg_index_t id)
 
     int v = bg.bg[id].img_vram;
     int vj, vi;
-    for (int j = 0; j < height; j++)
-    {
-        vj = j + bg.bg[id].vram_j;
-        for (int i = 0; i < width; i++)
-        {
-            vi = i + bg.bg[id].vram_i;
-            data[j * stride + i] = 0x00FF00FF;
-        }
-    }
-
+    
     for (int j = 0; j < height; j++)
     {
         vj = j + bg.bg[id].vram_j;
@@ -389,9 +388,10 @@ bg_render_bmp_to_cairo_surface (bg_index_t id)
     return surf;
 }
 
-void bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
-                       double *rotation_center_x, double *rotation_center_y,
-                       double *rotation, double *expansion)
+void
+canvas_bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
+                         double *rotation_center_x, double *rotation_center_y,
+                         double *rotation, double *expansion)
 {
     *scroll_x = bg.bg[id].scroll_x;
     *scroll_y = bg.bg[id].scroll_y;
@@ -403,17 +403,20 @@ void bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
 
 ////////////////////////////////////////////////////////////////
 
-SCM _scm_from_bg_index_t (bg_index_t x)
+static SCM
+_scm_from_bg_index_t (bg_index_t x)
 {
     return scm_from_int ((int) x);
 }
 
-bg_index_t _scm_to_bg_index_t (SCM x)
+static bg_index_t
+_scm_to_bg_index_t (SCM x)
 {
     return (bg_index_t) scm_to_int (x);
 }
 
-gboolean _scm_is_bg_index_t (SCM x)
+static gboolean
+_scm_is_bg_index_t (SCM x)
 {
     return scm_is_integer(x) && bg_validate_int_as_bg_index_t (scm_to_int (x));
 }
@@ -533,18 +536,6 @@ Set the position, rotation, expansion, and rotation center of a background.")
     return SCM_UNSPECIFIED;
 }
 
-
-
-SCM_DEFINE (G_bg_reset, "bg-reset", 1, 0, 0,
-            (SCM id), "\
-Reset a background be hidden, disable, and with nominal\n\
-scaling, rotation, and priority.")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-reset");
-    bg_reset (scm_to_int (id));
-    return SCM_UNSPECIFIED;
-}
-
 SCM_DEFINE (G_bg_set_expansion, "bg-set-expansion", 2, 0, 0, (SCM id, SCM expansion), "\
 Set BG expansion")
 {
@@ -602,7 +593,7 @@ Return #t if indicated background layer is visible.")
 {
     SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-shown?");
 
-    return scm_from_bool (bg_is_shown (scm_to_int (id)));
+    return scm_from_bool (canvas_bg_is_shown (scm_to_int (id)));
 }
 
 #if 0
@@ -673,23 +664,31 @@ Adjusts the brightness of all the colors used in backgrounds. Usually \n\
 a value between 0.0 (black) and 1.0 (unmodified colors).")
 {
     bg.brightness = scm_to_double(x);
+    for (int i = 0; i < 4; i ++)
+    {
+        if (bg.bg[i].enable)
+        {
+            bg.surf[i] = bg_render_to_cairo_surface(i);
+            bg.bg[i].dirty = TRUE;
+        }
+    }
+    
     return SCM_UNSPECIFIED;
 }
 
 
 SCM_VARIABLE_INIT (G_BG_TYPE_BMP, "BG_TYPE_BMP", scm_from_int (BG_TYPE_BMP));
-SCM_VARIABLE_INIT (G_BG_TYPE_MAP, "BG_TYPE_MAP", scm_from_int (BG_TYPE_MAP));
 
 SCM_VARIABLE_INIT (G_BG_0, "BG_0", scm_from_int (BG_0));
 SCM_VARIABLE_INIT (G_BG_1, "BG_1", scm_from_int (BG_1));
 SCM_VARIABLE_INIT (G_BG_2, "BG_2", scm_from_int (BG_2));
 SCM_VARIABLE_INIT (G_BG_3, "BG_3", scm_from_int (BG_3));
 
-SCM_DEFINE (G_set_background_image, "set-background-image", 2, 4, 0,
+SCM_DEFINE (G_set_background_image, "bg-setup", 2, 4, 0,
             (SCM s_id, SCM s_vram, SCM s_i, SCM s_j, SCM s_width, SCM s_height), "")
 {
-    SCM_ASSERT (scm_is_integer (s_id), s_id, SCM_ARG1, "set-background-image");
-    SCM_ASSERT (scm_is_integer (s_vram), s_vram, SCM_ARG2, "set-background-image");
+    SCM_ASSERT (scm_is_signed_integer (s_id, BG_0, BG_3), s_id, SCM_ARG1, "set-background-image");
+    SCM_ASSERT (scm_is_signed_integer (s_vram, VRAM_A, VRAM_J), s_vram, SCM_ARG2, "set-background-image");
 
     int id = scm_to_int (s_id);
     int vram = scm_to_int (s_vram);
@@ -713,49 +712,72 @@ SCM_DEFINE (G_set_background_image, "set-background-image", 2, 4, 0,
         else
             bg.bg[id].vram_j = scm_to_int (s_j);
         if (SCM_UNBNDP (s_width))
-            bg.bg[id].vram_width = vram_get_width(vram);
+            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, vram_get_width(vram));
         else
-            bg.bg[id].vram_width = scm_to_int (s_width);
+            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, scm_to_int (s_width));
         if (SCM_UNBNDP (s_height))
-            bg.bg[id].vram_height = vram_get_height(vram);
+            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, vram_get_height(vram));
         else
-            bg.bg[id].vram_height = scm_to_int (s_height);
+            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, scm_to_int (s_height));
     }
     bg.surf[id] = bg_render_to_cairo_surface(id);
     bg.bg[id].dirty = TRUE;
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (G_set_background_map, "set-background-map", 3, 4, 0,
-            (SCM bg_index, SCM img_vram, SCM map_vram, SCM i, SCM j, SCM width, SCM height), "")
-{
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_move_background, "move-background", 3, 4, 0,
+SCM_DEFINE (G_move_background, "bg-move", 3, 4, 0,
             (SCM id, SCM scroll_x, SCM scroll_y, SCM rotation, SCM expansion,
              SCM center_x, SCM center_y), "")
 {
+    SCM_ASSERT (scm_is_signed_integer (id, BG_0, BG_3), id, SCM_ARG1, "set-background-image");
+
+    int i = scm_to_int (id);
+    bg.bg[i].scroll_x = scm_to_double (scroll_x);
+    bg.bg[i].scroll_y = scm_to_double (scroll_y);
+    if (!SCM_UNBNDP(center_x))
+        bg.bg[i].rotation_center_x = scm_to_double (center_x);
+    if (!SCM_UNBNDP(center_y))
+        bg.bg[i].rotation_center_y = scm_to_double (center_y);
+    if (!SCM_UNBNDP(expansion))
+        bg.bg[i].expansion = scm_to_double (expansion);
+    if (!SCM_UNBNDP(rotation))
+        bg.bg[i].rotation = scm_to_double (rotation);
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (G_reset_background, "reset-background", 1, 0, 0,
+SCM_DEFINE (G_reset_background, "bg-reset", 1, 0, 0,
             (SCM id), "")
 {
+    SCM_ASSERT (scm_is_signed_integer (id, BG_0, BG_3), id, SCM_ARG1, "set-background-image");
+    
+    int i = scm_to_int (id);
+    bg_reset(i);
+        
     return SCM_UNSPECIFIED;    
 }
 
 void
 canvas_bg_init_guile_procedures (void)
 {
-    bg_init();
 #ifndef SCM_MAGIC_SNARFER
 #include "canvas_bg.x"
 #endif
-    scm_c_export ("set-background-image",
-                  "set-background-map",
-                  "move-background",
-                  "reset-background",
+    scm_c_export ("bg-setup",
+                  "bg-move",
+                  "bg-reset",
+                  "bg-set-colorswap",
+                  "bg-get-colorswap",
+                  "bg-set-brightness",
+                  "bg-get-brightness",
+                  "bg-hide",
+                  "bg-show",
+                  "bg-rotate",
+                  "bg-scroll",
+                  "bg-set-expansion",
+                  "bg-set-rotation",
+                  "bg-set-rotation-center",
+                  "bg-set-rotation-expansion",
+                  
                   "BG_0",
                   "BG_1",
                   "BG_2",
@@ -772,21 +794,9 @@ canvas_bg_init_guile_procedures (void)
 
                   "bg-reset",
 
-                  "bg-hide",
-                  "bg-show",
 
                   "bg-set",
-                  "bg-rotate",
-                  "bg-scroll",
-                  "bg-set-expansion",
-                  "bg-set-rotation",
-                  "bg-set-rotation-center",
-                  "bg-set-rotation-expansion",
 
-                  "bg-set-colorswap",
-                  "bg-get-colorswap",
-                  "bg-set-brightness",
-                  "bg-get-brightness",
 
 
                   "bg-update",

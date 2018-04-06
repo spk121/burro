@@ -59,6 +59,8 @@
      set-backdrop
      get-backdrop
      set-markup
+     set-font
+     set-font-color
      VRAM_A
      VRAM_B
      VRAM_C
@@ -87,7 +89,10 @@
      audio-set-volume
      audio-get-volume
      BG_0 BG_1 BG_2 BG_3
-     set-background-image
+     bg-setup
+     bg-move
+     bg-reset
+     bg-set-brightness
      )))
 
 (define (make-sandbox)

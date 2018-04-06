@@ -220,7 +220,7 @@
                       <object class="GtkLabel">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Errors and Watches</property>
+                        <property name="label" translatable="yes">'watch' procedure output</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>

@@ -22,6 +22,7 @@ struct _BurroCanvas
     PangoLayout *layout;
     gboolean layout_flag;
     int layout_priority;
+    guint32 font_color;
 
     guint tick_cb_id;
 };
@@ -51,7 +52,8 @@ tick_cb (GtkWidget *widget, GdkFrameClock *frame_clock, void *user_data)
     if (gtk_widget_is_visible (widget))
     {
         if (canvas_cur->dirty
-            || bg_is_dirty(0) || bg_is_dirty(1) || bg_is_dirty(2) || bg_is_dirty(3))
+            || canvas_bg_is_dirty(0) || canvas_bg_is_dirty(1)
+            || canvas_bg_is_dirty(2) || canvas_bg_is_dirty(3))
         {
             // Draw it up on a backbuffer
             draw();
@@ -60,7 +62,11 @@ tick_cb (GtkWidget *widget, GdkFrameClock *frame_clock, void *user_data)
             // called, which is where we actually blit it to the
             // widget.
             gdk_window_invalidate_rect (gtk_widget_get_window (widget), NULL, FALSE);
-            
+
+            canvas_bg_set_clean(0);
+            canvas_bg_set_clean(1);
+            canvas_bg_set_clean(2);
+            canvas_bg_set_clean(3);
             canvas_cur->dirty = FALSE;
         }
     }
@@ -146,11 +152,11 @@ static void draw_background_layer (bg_index_t layer)
     double scroll_x, scroll_y, rotation_center_x, rotation_center_y;
     double rotation, expansion;
 
-    surf = bg_get_cairo_surface (layer);
+    surf = canvas_bg_get_cairo_surface (layer);
     cairo_surface_mark_dirty (surf);
-    bg_get_transform (layer, &scroll_x, &scroll_y,
-                      &rotation_center_x, &rotation_center_y,
-                      &rotation, &expansion);
+    canvas_bg_get_transform (layer, &scroll_x, &scroll_y,
+                             &rotation_center_x, &rotation_center_y,
+                             &rotation, &expansion);
     compute_transform (&matrix, scroll_x, scroll_y,
                        rotation_center_x, rotation_center_y,
                        rotation, expansion);
@@ -161,10 +167,22 @@ static void draw_background_layer (bg_index_t layer)
 static void draw_textbox()
 {
     cairo_save (canvas_cur->context);
-    cairo_set_source_rgb (canvas_cur->context,
-                          0.7 * canvas_cur->brightness,
-                          0.7 * canvas_cur->brightness,
-                          0.7 * canvas_cur->brightness);
+    double r = 0.0, g = 0.0, b = 0.0;
+    guint32 c32 = canvas_cur->font_color;
+    r = ((double)((c32 & 0x00ff0000) >> 16)) / 255.0;
+    g = ((double)((c32 & 0x0000ff00) >> 8)) / 255.0;
+    b = ((double)((c32 & 0x000000ff))) / 255.0;
+    if (canvas_cur->colorswap_flag)
+    {
+        double tmp = r;
+        r = b;
+        b = tmp;
+    }
+    r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0); 
+    g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0); 
+    b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0); 
+    cairo_set_source_rgb (canvas_cur->context, r, g, b);
+    
     cairo_move_to(canvas_cur->context, CANVAS_MARGIN, CANVAS_MARGIN);
     pango_cairo_show_layout (canvas_cur->context, canvas_cur->layout);
     cairo_restore(canvas_cur->context);
@@ -179,7 +197,7 @@ static void draw ()
 
     for (int z = CANVAS_ZLEVEL_COUNT - 1; z >= 0; z --)
     {
-        if (bg_is_shown (z))
+        if (canvas_bg_is_shown (z))
             draw_background_layer (z);
     }
 #if 0
@@ -233,10 +251,14 @@ burro_canvas_init (BurroCanvas *win)
     win->context = cairo_create (win->surface);
     cairo_set_antialias (win->context, CAIRO_ANTIALIAS_NONE);
 
+    // Set up the background
+    canvas_bg_init ();
+    
     // Set up the text drawing
     win->layout = pango_cairo_create_layout (win->context);
     win->layout_flag = FALSE;
     win->layout_priority = 0;
+    win->font_color = 0xB2B2B2;
 
     /* Set the font. */
     PangoFontDescription *desc = pango_font_description_from_string("Serif 16");
@@ -274,7 +296,9 @@ canvas_dispose (GObject *object)
 {
     BurroCanvas *win;
 
+
     canvas_audio_fini();
+    canvas_bg_fini();
     
     win = BURRO_CANVAS (object);
 
@@ -438,6 +462,33 @@ Returns a 32-bit RGB color, which is the canvas backdrop color.")
     return scm_from_uint32 (canvas_cur->backdrop);
 }
 
+SCM_DEFINE (G_canvas_set_default_font, "set-font", 1, 0, 0,
+            (SCM s_str), "")
+{
+    SCM_ASSERT (scm_is_string (s_str), s_str, SCM_ARG1, "set-font");
+
+    char *str = scm_to_utf8_string (s_str);
+    PangoFontDescription *desc = pango_font_description_from_string(str);
+    pango_layout_set_font_description (canvas_cur->layout, desc);
+    pango_font_description_free (desc);
+    free (str);
+    return SCM_UNSPECIFIED;
+}
+
+SCM_DEFINE (G_canvas_set_default_font_color, "set-font-color", 1, 0, 0,
+            (SCM s_str), "")
+{
+    SCM_ASSERT (scm_is_string (s_str), s_str, SCM_ARG1, "set-font");
+
+    char *str = scm_to_utf8_string (s_str);
+    guint32 colorval;
+    gboolean ret = canvas_lookup_colorval (str, &colorval);
+    free (str);
+    if (ret)
+        canvas_cur->font_color = colorval;
+    return scm_from_bool (ret);
+}
+
 SCM_DEFINE(G_canvas_set_markup, "set-markup", 1, 0, 0, (SCM s_str), "\
 Given a string, possibly with Pango-style XML markup, sets the\n\
 textbox text.")
@@ -551,6 +602,8 @@ canvas_init_guile_procedures ()
                   "set-markup",
                   "position-to-string-index",
                   "update-text-fgcolor-on-region",
+                  "set-font",
+                  "set-font-color",
                   NULL);
 }
 
