@@ -82,6 +82,44 @@
      ".\n"
      "You can place images there."
      "\n\n"
-     (a (@ (action ,One)) "click me"))))
+     (a (@ (action ,Seven)) "click me"))))
 
-(Six)
+(define (Seven)
+  (load-audio-file "../game/waltz2.ogg" VRAM_B)
+  (audio-channel-play 1 VRAM_B)
+  (clickable-text
+   `(markup
+     "You can play audio, so long as your audio files are "
+     "Ogg Vorbis.  I only had the patience for one audio filter. "
+     "\n\n"
+     "I need you to slightly impressed, because audio in a pain "
+     "in the backside.\n\n"
+     (a (@ (action ,Eight)) "yup, that's audio"))))
+
+(define (Eight)
+  (bg-reset BG_1)
+  (audio-channel-stop 1)
+  (clickable-text
+   `(markup
+     "That's really all you need for a Twine-like game."
+     "\n\n"
+     "I declare this here to be an alpha-level product."
+     "\n\n"
+     "Are you impressed?."
+     "\n\n"
+     (a (@ (action ,Yes)) "Yes!")
+     "\n"
+     (a (@ (action ,No)) "No!"))))
+
+(define (No)
+  (clickable-text
+   '(markup
+     (small "It is a good thing that I don't live my life seeking validation ")
+     (small "from the likes of you."))))
+
+(define (Yes)
+  (clickable-text
+   '(markup
+     (big "Finally, for the first time in my life, some validation!"))))
+
+(One)
