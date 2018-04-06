@@ -446,14 +446,23 @@ canvas_audio_init_step_2(pa_context *context)
 /* This finalizer is called if we are shutting down cleanly */
 void canvas_audio_fini()
 {
+    if (pulse.context)
+    {
+        pa_context_unref(pulse.context);
+        pulse.context = NULL;
+    }
 #ifdef USE_GLIB_MAINLOOP
     if (pulse.loop)
+    {
         pa_glib_mainloop_free (pulse.loop);
-    pulse.loop = NULL;
+        pulse.loop = NULL;
+    }
 #else
     if (pulse.loop)
+    {
         pa_mainloop_free (pulse.loop);
-    pulse.loop = NULL;
+        pulse.loop = NULL;
+    }
 #endif
     g_debug("PulseAudio finalization complete");
 }

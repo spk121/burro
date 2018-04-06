@@ -34,6 +34,9 @@
 ** Useful backtrace
 ** C catch handler
    The catch handler in burro_lisp.c doesn't handle all tag types.
+** Valgrind: Change canvas->surface to have static data store?
+   Use cairo_image_surface_create_for_data() and a static
+   data store.
 * Scheme library
 ** display, write, and format for sandbox
 ** Twine helper functions

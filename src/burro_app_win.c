@@ -115,7 +115,7 @@ action_open (GSimpleAction *simple,
                                           GTK_RESPONSE_ACCEPT,
                                           NULL);
 
-   gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog),
+    gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (dialog),
                                  filter);
 
     res = gtk_dialog_run (GTK_DIALOG (dialog));
@@ -124,14 +124,11 @@ action_open (GSimpleAction *simple,
         GtkFileChooser *chooser = GTK_FILE_CHOOSER (dialog);
         GFile *file = gtk_file_chooser_get_file (chooser);
         gtk_widget_destroy (dialog);
-        g_object_unref (filter);
         burro_app_window_open (BURRO_APP_WINDOW (parent_window), file);
         g_object_unref (file);
     }
-    else {
-        g_object_unref (filter);
+    else
         gtk_widget_destroy (dialog);
-    }
 }
 
 static void
@@ -439,8 +436,11 @@ burro_app_window_init (BurroAppWindow *win)
     GMenuModel *menu;
     GAction *action;
 
+    // We temporarily construct a canvas so that the canvas class is
+    // ready to go before calling builder.
     BurroCanvas *tmp = burro_canvas_new();
-    printf("%p\n", tmp);
+    g_object_ref_sink (tmp);
+    g_object_unref (tmp);
 
     gtk_widget_init_template (GTK_WIDGET (win));
 
@@ -640,6 +640,7 @@ burro_app_window_open (BurroAppWindow *win,
         gtk_dialog_run (GTK_DIALOG (dialog));
         gtk_widget_destroy (dialog);
         g_free (filename);
+        free (err_string);
     }
     //if (file)
     //    g_object_unref (file);

@@ -742,6 +742,16 @@ SCM_DEFINE (G_debug_debug_peek_append, "debug-peek-append", 3, 0, 0,
     char *slabel = scm_to_utf8_string(label);
     char *svalue = scm_to_utf8_string(value);
     char *sstack = scm_to_utf8_string(stack);
+    if (!debug_window_cur)
+    {
+        g_info("debug-peek-append: %s: %s", slabel, svalue);
+        free (timestr);
+        free (slabel);
+        free (svalue);
+        free (sstack);
+        return SCM_UNSPECIFIED;
+    }
+
     GtkTreeIter iter;
     gtk_list_store_insert (debug_window_cur->debug_peek_list_store,
                            &iter,

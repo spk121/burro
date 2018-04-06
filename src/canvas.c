@@ -296,12 +296,10 @@ canvas_dispose (GObject *object)
 {
     BurroCanvas *win;
 
-
     canvas_audio_fini();
     canvas_bg_fini();
     
     win = BURRO_CANVAS (object);
-
     if (win->tick_cb_id > 0)
     {
         gtk_widget_remove_tick_callback (GTK_WIDGET(win), win->tick_cb_id);
@@ -318,8 +316,12 @@ canvas_dispose (GObject *object)
     
     if (win->surface)
     {
+        unsigned int rc = cairo_surface_get_reference_count (win->surface);
+        if (cairo_surface_get_reference_count (win->surface) != 1)
+            g_warning ("in canvas_dispose, win->surface reference count is %d != 1\n", rc);
         cairo_surface_destroy (win->surface);
-        win->surface = NULL;
+        if (rc == 1)
+            win->surface = NULL;
     }
     G_OBJECT_CLASS (burro_canvas_parent_class)->dispose (object);
 }
@@ -496,6 +498,7 @@ textbox text.")
     SCM_ASSERT (scm_is_string (s_str), s_str, SCM_ARG1, "set-markup");
     char *str = scm_to_utf8_string (s_str);
     pango_layout_set_markup (canvas_cur->layout, str, -1);
+    free (str);
     canvas_cur->layout_flag = TRUE;
     
     canvas_cur->dirty = TRUE;
