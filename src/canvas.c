@@ -28,7 +28,7 @@ struct _BurroCanvas
 
 static void draw ();
 
-G_DEFINE_TYPE(BurroCanvas, burro_canvas, GTK_TYPE_DRAWING_AREA);
+G_DEFINE_TYPE(BurroCanvas, burro_canvas, GTK_TYPE_DRAWING_AREA)
 
 BurroCanvas *canvas_cur = NULL;
 
@@ -254,7 +254,7 @@ burro_canvas_init (BurroCanvas *win)
                                                     NULL);
 
     // Start up the audio engine
-    pulse_initialize_audio_step_1();
+    canvas_audio_init();
     
     win->dirty = TRUE;
     canvas_cur = win;
@@ -274,6 +274,8 @@ canvas_dispose (GObject *object)
 {
     BurroCanvas *win;
 
+    canvas_audio_fini();
+    
     win = BURRO_CANVAS (object);
 
     if (win->tick_cb_id > 0)

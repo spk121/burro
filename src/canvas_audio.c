@@ -21,6 +21,10 @@ static const ov_callbacks ov_cb = {
 
 /* These buffers hold uncompressed audio queued up to sent to
  * Pulseaudio. */
+#define MICROSECONDS_PER_MILLISECOND (1000)
+
+#define AUDIO_LATENCY_REQUESTED_IN_MILLISECONDS (100)
+
 #define AM_CHANNELS_NUM 4
 #define AM_OV_READ_BUFFER_SIZE 4096
 #define AM_SAMPLE_RATE_IN_HZ (48000u)
@@ -63,13 +67,13 @@ typedef struct pulse_priv_tag {
 #else
     pa_mainloop *loop;
 #endif
-    gboolean finalize;
     unsigned samples_written;
 } pulse_priv_t;
 
 static audio_model_t am;
 static pulse_priv_t pulse;
 
+static void canvas_audio_init_step_2 (pa_context *context);
 static void cb_audio_context_state(pa_context *c, void *userdata);
 static void cb_audio_stream_started(pa_stream *p,
                                     void *userdata);
@@ -275,7 +279,7 @@ static void cb_audio_context_state(pa_context *c, void *userdata)
         break;
     case PA_CONTEXT_READY:
         g_debug("PulseAudio set context state to READY");
-        pulse_initialize_audio_step_2 (c);
+        canvas_audio_init_step_2 (c);
         break;
     default:
         g_debug("PulseAudio set context state to %d", pulse.state);
@@ -315,7 +319,7 @@ static void cb_audio_stream_write(pa_stream *p, size_t nbytes, void *userdata)
     pulse.samples_written += n;
 }
 
-void pulse_initialize_audio_step_1()
+void canvas_audio_init()
 {
     pa_mainloop_api *vtable = NULL;
     pa_proplist *main_proplist = NULL;
@@ -352,9 +356,15 @@ void pulse_initialize_audio_step_1()
     /* Connect the context */
     xpa_context_connect_to_default_server(pulse.context);
 
+    am.volume = 1.0;
+    am.playing = TRUE;
+    for (int i = 0; i < 4; i ++)
+        am.channels[i].volume = 1.0;
+    
 }
 
-void pulse_initialize_audio_step_2(pa_context *context)
+static void
+canvas_audio_init_step_2(pa_context *context)
 {
     pa_proplist *stream_proplist;
     pa_sample_spec sample_specification;
@@ -366,7 +376,7 @@ void pulse_initialize_audio_step_2(pa_context *context)
 
     /* SAMPLE_SPEC:  we describe the data going into our channel */
     sample_specification.format = PA_SAMPLE_FLOAT32NE;
-    sample_specification.rate = AUDIO_SAMPLE_RATE_IN_HZ;
+    sample_specification.rate = AM_SAMPLE_RATE_IN_HZ;
     sample_specification.channels = 1;
     g_assert(pa_sample_spec_valid(&sample_specification));
 
@@ -434,14 +444,17 @@ void pulse_initialize_audio_step_2(pa_context *context)
 }
 
 /* This finalizer is called if we are shutting down cleanly */
-void pulse_finalize_audio()
+void canvas_audio_fini()
 {
-#ifdef USE_GLIB_MAINLOOP    
-    pa_glib_mainloop_free (pulse.loop);
+#ifdef USE_GLIB_MAINLOOP
+    if (pulse.loop)
+        pa_glib_mainloop_free (pulse.loop);
+    pulse.loop = NULL;
 #else
-    pa_mainloop_free (pulse.loop);
+    if (pulse.loop)
+        pa_mainloop_free (pulse.loop);
+    pulse.loop = NULL;
 #endif
-    pulse.finalize = TRUE;
     g_debug("PulseAudio finalization complete");
 }
 
@@ -567,10 +580,6 @@ Set the main volume for the audio.\n")
 void
 canvas_audio_init_guile_procedures()
 {
-    am.volume = 1.0;
-    am.playing = TRUE;
-    for (int i = 0; i < 4; i ++)
-        am.channels[i].volume = 1.0;
 #ifndef SCM_MAGIC_SNARFER
 #include "canvas_audio.x"
 #endif

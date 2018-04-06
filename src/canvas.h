@@ -7,8 +7,10 @@
 #include "canvas_vram.h"
 #include "canvas_audio.h"
 
+#pragma GCC visibility push(default)
 #define BURRO_TYPE_CANVAS (burro_canvas_get_type ())
 G_DECLARE_FINAL_TYPE (BurroCanvas, burro_canvas, BURRO, CANVAS, GtkDrawingArea)
+#pragma GCC visibility pop
 
 #define CANVAS_WIDTH 512
 #define CANVAS_HEIGHT 384
