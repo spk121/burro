@@ -2,6 +2,8 @@
 #include "canvas.h"
 #include "burro_repl.h"
 #include "burro_resources.h"
+#include "burro_lineedit.h"
+#include "burro_console.h"
 
 #include <gtk/gtk.h>
 #include <libguile.h>
@@ -35,10 +37,10 @@ struct _BurroDebugWindow
 {
     GtkWindow parent;
     GtkAccelGroup *accels;
+    GtkDrawingArea *terminal;
     GtkTextView *message_view;
     GtkTextBuffer *message_store;
     GtkScrolledWindow *message_scrolled_window;
-    GtkEntry *console_entry;
     GtkComboBoxText *repl_combobox;
     GtkTreeView *vram_tree_view;
     GtkListStore *vram_list_store;
@@ -52,7 +54,13 @@ struct _BurroDebugWindow
 
   // Log handler
     guint log_handler_id;
+    guint key_press_event_signal_id;
+    guint terminal_draw_event_id;
+    guint terminal_timeout;
 };
+
+extern char *
+burro_app_window_eval_string_in_sandbox (const char *txt);
 
 
 static void
@@ -93,8 +101,7 @@ signal_action_repl_enabled (GtkComboBox *widget,
     }
 }
 
-
-G_DEFINE_TYPE(BurroDebugWindow, burro_debug_window, GTK_TYPE_WINDOW);
+G_DEFINE_TYPE(BurroDebugWindow, burro_debug_window, GTK_TYPE_WINDOW)
 
 static BurroDebugWindow *debug_window_cur;
 
@@ -170,10 +177,165 @@ signal_debug_next (GtkButton *button, gpointer user_data)
 
 }
 
-static void
-timeout_action_destroy (gpointer data)
+char *
+guile_any_to_c_string (SCM x)
 {
+    if (SCM_UNBNDP (x))
+        return (g_strdup ("(undefined)"));
+    else if (x == SCM_EOL)
+        return (g_strdup ("(eol)" ));
+    else if (x == SCM_EOF_VAL)
+        return (g_strdup ("(eof)"));
+    else if (x == SCM_UNSPECIFIED)
+        return NULL;
+    else if (scm_is_bool (x)) {
+        if (scm_is_true (x))
+            return g_strdup("#t");
+        else
+            return g_strdup("#f");
+    }
+    else {
+        SCM proc = scm_c_eval_string ("display");
+        SCM outp = scm_open_output_string ();
+        scm_call_2 (proc, x, outp);
+        SCM ret = scm_get_output_string (outp);
+        scm_close (outp);
+        return scm_to_locale_string (ret);
+    }
+}
 
+static gboolean key_event_terminal (GtkWidget *widget, GdkEventKey *event, gpointer dummy)
+{
+    unsigned keysym = event->keyval;
+    unsigned state = event->state;
+    // Here we process non-textual keys
+    if (keysym == GDK_KEY_BackSpace)
+        lineedit_backspace();
+    else if (keysym == GDK_KEY_Tab)
+        lineedit_autocomplete();
+    else if ((state & GDK_CONTROL_MASK))
+    {
+        if ((keysym == GDK_KEY_A) || (keysym == GDK_KEY_a))
+            lineedit_move_home();
+        if (keysym == GDK_KEY_B || (keysym == GDK_KEY_b))
+            lineedit_move_left();
+        if (keysym == GDK_KEY_C || (keysym == GDK_KEY_c))
+            lineedit_ctrl_c();
+        if (keysym == GDK_KEY_D || (keysym == GDK_KEY_d))
+            lineedit_delete_or_eof();
+        if (keysym == GDK_KEY_E || (keysym == GDK_KEY_e))
+            lineedit_move_end();
+        if (keysym == GDK_KEY_F || (keysym == GDK_KEY_f))
+            lineedit_move_right();
+        if (keysym == GDK_KEY_G || (keysym == GDK_KEY_g))
+            lineedit_backspace();
+        if (keysym == GDK_KEY_H || (keysym == GDK_KEY_h))
+            lineedit_delete_to_end();
+        if (keysym == GDK_KEY_L || (keysym == GDK_KEY_l))
+            lineedit_clear_screen();
+        if (keysym == GDK_KEY_N || (keysym == GDK_KEY_n))
+            lineedit_history_next();
+        if (keysym == GDK_KEY_P || (keysym == GDK_KEY_p))
+            lineedit_history_prev();
+        if (keysym == GDK_KEY_T || (keysym == GDK_KEY_t))
+            lineedit_swap_chars();
+        if (keysym == GDK_KEY_Y || (keysym == GDK_KEY_y))
+            lineedit_delete_line();
+        if (keysym == GDK_KEY_W || (keysym == GDK_KEY_w))
+            lineedit_delete_word_prev();
+    }
+    else if (keysym == GDK_KEY_Delete)
+        lineedit_delete();
+    else if (keysym == GDK_KEY_Down)
+        lineedit_history_next();
+    else if (keysym == GDK_KEY_End)
+        lineedit_move_end();
+    else if (keysym == GDK_KEY_Home)
+        lineedit_move_home();
+    else if ((keysym == GDK_KEY_Insert) || (keysym == GDK_KEY_KP_Insert))
+        lineedit_toggle_insert_mode();
+    else if (keysym == GDK_KEY_Left)
+        lineedit_move_left();
+    else if (keysym == GDK_KEY_Right)
+        lineedit_move_right();
+    else if (keysym == GDK_KEY_Up)
+        lineedit_history_prev();
+    else if (keysym == GDK_KEY_Tab)
+        ;
+    else if (keysym == GDK_KEY_Clear)
+        ;
+    else if (keysym == GDK_KEY_Pause)
+        ;
+    else if (keysym == GDK_KEY_Delete)
+    {
+    }
+    else if (keysym == GDK_KEY_Return) {
+        // End this lineedit session
+        // Act on the string
+        // Maybe add the string to the history
+        lineedit_stop();
+        console_move_to_column(0);
+        console_move_down(1);
+
+        char *script = lineedit_get_text();
+        if (strlen(script) > 0) {
+            // Call script callback with the current string
+#if 1
+            char *output = burro_app_window_eval_string_in_sandbox (script);
+            if (output) {
+                if (g_strcmp0 (output, "#<unspecified>") != 0)
+                {
+                    if (strncmp (output, "ERROR", 5) == 0)
+                        console_set_fgcolor (CONSOLE_COLOR_RED);
+                    console_write_utf8_string(output);
+                    console_set_fgcolor (CONSOLE_COLOR_DEFAULT);
+                    console_move_to_column(0);
+                    console_move_down(1);
+                }
+                g_free(output);
+            }
+            
+#endif
+
+            //lineedit_start(linenoiseLineBuf, LINENOISE_MAX_LINE, L"->");
+        }
+        g_free (script);
+        lineedit_start();
+    }
+    else if (keysym >= GDK_KEY_space && keysym <= GDK_KEY_ydiaeresis)
+    {
+        wchar_t input[2];
+        input[0] = keysym;
+        input[1] = L'\0';
+        // if (autocomplete_flag)
+        //     lineedit_autocomplete_text_input(input);
+        // else
+        lineedit_text_input(input);
+    }
+    return true;
+}
+
+gboolean
+draw_event_terminal (GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+    cairo_surface_t *surf;
+
+    surf = console_render_to_cairo_surface ();
+    cairo_surface_mark_dirty (surf);
+
+    /* Now copy it to the screen */
+    cairo_set_source_surface (cr, surf, 0, 0);
+    cairo_surface_destroy (surf);
+    cairo_paint(cr);
+    return TRUE;
+}
+
+gboolean
+force_terminal_draw (gpointer user_data)
+{
+    GtkWidget *terminal = GTK_WIDGET(user_data);
+    gtk_widget_queue_draw_area (terminal, 0, 0, 640, 312);
+    return TRUE;
 }
 
 static void
@@ -219,33 +381,27 @@ burro_debug_window_init (BurroDebugWindow *win)
 
     gtk_widget_init_template (GTK_WIDGET (win));
 
-    // Construct the menu
-#if 0
-    g_action_map_add_action_entries (G_ACTION_MAP (win),
-                                     win_entries, G_N_ELEMENTS (win_entries),
-                                     win);
-#endif
-#if 0
-    GtkAccelGroup *accel = gtk_accel_group_new();
-    GClosure *cl_view = g_cclosure_new(G_CALLBACK(accel_action_view_tools),
-                                       win, NULL);
-    gtk_accel_group_connect (accel,
-                             GDK_KEY_F12,
-                             0,
-                             GTK_ACCEL_VISIBLE,
-                             cl_view);
-    gtk_window_add_accel_group(GTK_WINDOW (win),
-                               accel);
-
-#endif
+    // Set up the terminal
+    gtk_widget_set_events (GTK_WIDGET (win->terminal),
+                           GDK_BUTTON_PRESS_MASK);
+        
+    win->key_press_event_signal_id =
+        g_signal_connect (G_OBJECT (win),
+                          "key-press-event",
+                          G_CALLBACK (key_event_terminal),
+                          win->terminal);
+    win->terminal_draw_event_id =
+        g_signal_connect (G_OBJECT(win->terminal), "draw",
+                          G_CALLBACK (draw_event_terminal), NULL);
+    lineedit_initialize();
+    console_reset();
+    console_enable_repl();
+    win->terminal_timeout = 
+        g_timeout_add (100, force_terminal_draw, win->terminal);
+    
     // Attach a text storage to the text box
     win->message_store = gtk_text_view_get_buffer (win->message_view);
 
-    // Set up console entry
-    g_signal_connect (win->console_entry,
-                      "activate",
-                      G_CALLBACK(signal_action_console_activate),
-                      NULL);
 
     // Set up REPL
     gtk_combo_box_set_active (GTK_COMBO_BOX (win->repl_combobox), 0);
@@ -413,10 +569,10 @@ burro_debug_window_class_init (BurroDebugWindowClass *class)
 #define BIND(x) \
     gtk_widget_class_bind_template_child (widget_class, BurroDebugWindow, x)
 
+    BIND(terminal);
     BIND(message_view);
     BIND(message_scrolled_window);
     BIND(repl_combobox);
-    BIND(console_entry);
     BIND(vram_tree_view);
     BIND(update_rate_label);
     BIND(duty_cycle_label);

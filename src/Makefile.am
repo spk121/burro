@@ -4,47 +4,7 @@ lib_LTLIBRARIES = libburrocanvas.la
 ################################################################
 # TOP-LEVEL SOURCES
 
-libburrocanvas_la_SOURCES = \
- canvas.c canvas.h \
- canvas_vram.c canvas_vram.h \
- canvas_bg.c canvas_bg.h \
- canvas_colors.c canvas_colors.h \
- canvas_audio.c canvas_audio.h \
- canvas_lib.c canvas_lib.h
-
-SRCS_X_H = \
- x/xcairo.h \
- x/xgdk.h \
- x/xgdk-pixbuf.h \
- x/xgio.h \
- x/xglib.h \
- x/xgtk.h \
- x/xguile.h \
- x/xpulseaudio.h
-
-SRCS_Y_H =
-
-SRCS_X_C   = \
- x/xcairo.c \
- x/xgdk.c \
- x/xgdk-pixbuf.c \
- x/xgio.c \
- x/xglib.c \
- x/xgtk.c \
- x/xguile.c \
- x/xpulseaudio.c
-
-SRCS_Y_C =
-
 DOT_X_FILES = \
- x/xcairo.x \
- x/xgdk-pixbuf.x \
- x/xgdk.x \
- x/xgio.x \
- x/xglib.x \
- x/xgtk.x \
- x/xguile.x \
- x/xpulseaudio.x \
  burro_app_win.x \
  burro_debug_window.x \
  canvas.x \
@@ -52,14 +12,46 @@ DOT_X_FILES = \
  canvas_bg.x \
  canvas_audio.x
 
-BUILT_SOURCES = $(DOT_X_FILES) \
+libburrocanvas_la_SOURCES = \
+ canvas.c canvas.h canvas.x \
+ canvas_audio.c canvas_audio.h canvas_audio.x \
+ canvas_bg.c canvas_bg.h canvas_bg.x \
+ canvas_colors.c canvas_colors.h \
+ canvas_lib.c canvas_lib.h \
+ canvas_vram.c canvas_vram.h canvas_vram.x \
+ visibility.h 
+
+burro_engine_SOURCES = \
+ 8x13.h \
+ burro_app.c burro_app.h \
+ burro_app_win.c burro_app_win.h burro_app_win.x \
+ burro_console.c burro_console.h \
+ burro_debug_window.c burro_debug_window.h burro_debug_window.x \
+ burro_lisp.c burro_lisp.h \
+ burro_lineedit.c burro_lineedit.h \
+ burro_paths.h \
+ burro_preferences_dialog.c burro_preferences_dialog.h \
+ burro_repl.c burro_repl.h \
+ burro_resources.h \
+ main.c \
+ r/burro.resource.c r/burro.resource.h
+
+BUILT_SOURCES = \
+ $(DOT_X_FILES) \
  r/burro.resource.c \
  r/burro.resource.h \
  burro_paths.h
 
-EXTRA_DIST = r/burro.resource.xml
+DOT_UI_FILES = \
+ r/app-menu.ui \
+ r/window.ui \
+ r/debug-window.ui \
+ r/burro_preferences_dialog.ui \
+ r/gears-menu.ui
 
-r/burro.resource.c: r/burro.resource.xml r/app-menu.ui r/window.ui r/debug-window.ui r/burro_preferences_dialog.ui r/gears-menu.ui
+EXTRA_DIST = r/burro.resource.xml $(DOT_UI_FILES)
+
+r/burro.resource.c: r/burro.resource.xml $(DOT_UI_FILES)
 	$(GLIB_COMPILE_RESOURCES) --sourcedir=r --generate-source $<
 
 r/burro.resource.h: r/burro.resource.xml
@@ -102,29 +94,24 @@ burro_paths.h: Makefile
 
 CLEANFILES = $(DOT_X_FILES) burro_paths.h
 
-burro_engine_SOURCES = $(SRCS_X_H) \
- r/burro.resource.c r/burro.resource.h \
- burro_app.c burro_app.h \
- burro_app_win.c burro_app_win.h \
- burro_debug_window.c burro_debug_window.h \
- burro_preferences_dialog.c burro_preferences_dialog.h \
- burro_lisp.c burro_lisp.h \
- burro_repl.c burro_repl.h \
- main.c
-
-burro_engine_LDFLAGS =
+burro_engine_CFLAGS = \
+  -std=c11 \
+  -fvisibility=hidden \
+  $(DEPS_CFLAGS) \
+  $(GUILE_CFLAGS)
 burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
-AM_CFLAGS = $(DEPS_CFLAGS) $(GUILE_CFLAGS)
 burro_engine_DEPENDENCIES = libburrocanvas.la
 
-libburrocanvas_la_CFLAGS = -fvisibility=hidden \
-	$(DEPS_CFLAGS) \
-	$(GUILE_CFLAGS) \
-	$(VORBISFILE_CFLAGS)
+libburrocanvas_la_CFLAGS = \
+  -std=c11 -pedantic \
+  -fvisibility=hidden \
+  $(DEPS_CFLAGS) \
+  $(GUILE_CFLAGS) \
+  $(VORBISFILE_CFLAGS)
 libburrocanvas_la_LDFLAGS = -no-undefined -Wl,--no-undefined
 libburrocanvas_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
 
-snarfcppopts = $(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
+snarfcppopts = $(DEFS) $(DEPS_CFLAGS) $(GUILE_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
 
 SUFFIXES = .x
 
@@ -132,11 +119,7 @@ SUFFIXES = .x
 	$(GUILE_SNARF) -o $@ $< $(snarfcppopts)
 
 gsettings_SCHEMAS = com.lonelycactus.burroengine.gschema.xml
-EXTRA_DIST += $(gsettings_SCHEMAS) \
- r/app-menu.ui \
- r/window.ui \
- r/burro_preferences_dialog.ui \
- r/gears-menu.ui
+EXTRA_DIST += $(gsettings_SCHEMAS) $(DOT_UI_FILES)
 
 @GSETTINGS_RULES@
 
