@@ -1,15 +1,19 @@
 (define-module (burro error)
   ;; #:use-module (burro engine)
-  #:export (string-if-exception))
+  #:export (string-if-exception
+	    print-exception+))
 
 (define (print-exception+ port frame key args)
   "Prints the exception described by key and args to the port.  Mostly
 it just calls Guile's native print-exception, but it adds some keys
 that print-exception doesn't handle."
+  (format #t "print-exception+ ~S ~S~%" key args)
+  (flush-all-ports)
   (cond
    ;; I guess I need to write special cases here for all
    ;; the keys that aren't handled well by print-exception.
-   ((eqv? key 'limit-exceeded)
+   ((or (eqv? key 'limit-exceeded)
+	(eqv? key 'numerical-overflow))
     (let ((subr (car args))
 	  (msg (cadr args))
 	  (msgargs (caddr args)))
@@ -51,11 +55,12 @@ that print-exception doesn't handle."
 	 
 	 (lambda (key . args)
 	   (let ((errstr (call-with-output-string
-			   (lambda (port)
-			     (print-exception+ port #f key args)))))
+	 		   (lambda (port)
+	 		     (print-exception+ port #f key args)))))
 	     (string-append errstr
-			    "\n"
-			    (find-a-location stack))))
+	 		    "\n"
+	 		    (find-a-location stack))))
+
 	 (lambda (key . args)
 	   (set! stack (make-stack #t 1 1))))))))
 

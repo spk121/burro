@@ -31,9 +31,8 @@
 
 (define sandbox-bindings
   '(((burro debug)
-     console-info
-     ;; console-error
-     watch)
+     log-info
+     Format)
   
     ((burro colors)
      color)
@@ -123,7 +122,7 @@
 errors that happen when reading a file into the sandbox."
   (let ((exception-msg (call-with-output-string
 			 (lambda (port)
-			   (print-exception port #f key args)))))
+			   (print-exception+ port #f key args)))))
     (string-append
      exception-msg
      "\nin expression\n"

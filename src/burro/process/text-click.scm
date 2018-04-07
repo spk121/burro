@@ -100,7 +100,7 @@ if it changed or #f otherwise."
 	       ;; associated action, but, only after we've finished
 	       ;; all the processes in this process chain.  So we add
 	       ;; an action process to the end of this process chain.
-	       (format #t "hotspot clicked\n")
+	       ;; (log-debug "hotspot clicked\n")
 	       ;; (pk "self" self)
 	       ;; (pk "self->next" (process-get-next self))
 	       (let loop ((p self))

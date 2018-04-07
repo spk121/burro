@@ -75,7 +75,7 @@
 (define *process-list* (list))
 
 (define (pm-attach process)
-  (console-info "Attaching new process")
+  (log-info "Attaching new process: ~A" (get-name process))
   (set! *process-list*
     (append! *process-list*
 	     (list process)))
