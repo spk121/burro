@@ -4,6 +4,7 @@
 #include "burro_resources.h"
 #include "burro_lineedit.h"
 #include "burro_console.h"
+#include "burro_journal.h"
 
 #include <gtk/gtk.h>
 #include <libguile.h>
@@ -38,8 +39,7 @@ struct _BurroDebugWindow
     GtkWindow parent;
     GtkAccelGroup *accels;
     GtkDrawingArea *terminal;
-    GtkTextView *message_view;
-    GtkTextBuffer *message_store;
+    GtkTreeView *message_view;
     GtkScrolledWindow *message_scrolled_window;
     GtkComboBoxText *repl_combobox;
     GtkTreeView *vram_tree_view;
@@ -104,49 +104,6 @@ signal_action_repl_enabled (GtkComboBox *widget,
 G_DEFINE_TYPE(BurroDebugWindow, burro_debug_window, GTK_TYPE_WINDOW)
 
 static BurroDebugWindow *debug_window_cur;
-
-static void
-signal_action_console_activate (GtkEntry *entry, gpointer user_data)
-{
-    const char* txt = gtk_entry_get_text (entry);
-    char *output = burro_app_window_eval_string_in_sandbox (txt);
-
-    GtkTextIter iter;
-    GtkTextBuffer *msgstore = debug_window_cur->message_store;
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-    gtk_text_buffer_place_cursor (msgstore, &iter);
-    gtk_text_buffer_insert_at_cursor (msgstore, ">>\t", -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, txt, -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, "\n", -1);
-    if (g_strcmp0 (output, "#<unspecified>") != 0)
-    {
-        if (strncmp (output, "ERROR:", 6) == 0)
-        {
-            console_write_icon ("dialog-error");
-            gtk_text_buffer_insert_at_cursor (msgstore, output + strlen("ERROR:"), -1);
-        }
-        else
-        {
-            gtk_text_buffer_insert_at_cursor (msgstore, "<<\t", -1);
-            gtk_text_buffer_insert_at_cursor (msgstore,
-                                              output, -1);
-        }
-        gtk_text_buffer_insert_at_cursor (msgstore, "\n", -1);
-    }
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-    gtk_text_buffer_place_cursor (msgstore, &iter);
-
-#if 0
-    gtk_text_view_scroll_to_iter (debug_window_cur->message_view,
-                                  &iter,
-                                  0.0, TRUE, 0.0, 1.0);
-#endif
-    GtkAdjustment *vadj
-        = gtk_scrolled_window_get_vadjustment(debug_window_cur->message_scrolled_window);
-    gtk_adjustment_set_value(vadj,
-                             gtk_adjustment_get_upper(vadj)
-                             - gtk_adjustment_get_page_size(vadj));
-}
 
 static void
 signal_debug_pause (GtkToggleButton *button, gpointer user_data)
@@ -338,39 +295,6 @@ force_terminal_draw (gpointer user_data)
     return TRUE;
 }
 
-static void
-log_func (const gchar *log_domain,
-          GLogLevelFlags log_level,
-          const gchar *message,
-          gpointer user_data)
-{
-    GtkTextBuffer *msgstore = debug_window_cur->message_store;
-    GtkTextIter iter;
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-    gtk_text_buffer_place_cursor (msgstore, &iter);
-
-    if (log_level == G_LOG_LEVEL_ERROR
-        || log_level == G_LOG_LEVEL_CRITICAL)
-        console_write_icon ("dialog-error");
-    else if (log_level == G_LOG_LEVEL_WARNING)
-        console_write_icon ("dialog-warning");
-    else
-        console_write_icon ("dialog-information");
-
-    gtk_text_buffer_insert_at_cursor (msgstore, "\t", -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, message, -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, "\n", -1);
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-
-    gtk_text_view_scroll_to_iter (debug_window_cur->message_view,
-                                  &iter,
-                                  0.0, TRUE, 0.0, 1.0);
-    GtkAdjustment *vadj
-        = gtk_scrolled_window_get_vadjustment(debug_window_cur->message_scrolled_window);
-    gtk_adjustment_set_value(vadj,
-                             gtk_adjustment_get_upper(vadj)
-                             - gtk_adjustment_get_page_size(vadj));
-}
 
 static void
 burro_debug_window_init (BurroDebugWindow *win)
@@ -399,9 +323,23 @@ burro_debug_window_init (BurroDebugWindow *win)
     win->terminal_timeout = 
         g_timeout_add (100, force_terminal_draw, win->terminal);
     
-    // Attach a text storage to the text box
-    win->message_store = gtk_text_view_get_buffer (win->message_view);
+    // Hoop up the message view
+    gtk_tree_view_set_model (win->message_view,
+                             GTK_TREE_MODEL (burro_journal_get_store ()));
+    {
+        GtkCellRenderer *renderer;
+        GtkTreeViewColumn *column;
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes("Key", renderer,
+                                                          "text", 0, NULL);
+        gtk_tree_view_append_column (win->message_view, column);
 
+        renderer = gtk_cell_renderer_text_new ();
+        column = gtk_tree_view_column_new_with_attributes("Value", renderer,
+                                                          "text", 1, NULL);
+        gtk_tree_view_append_column (win->message_view, column);
+    }
+    gtk_widget_show (GTK_WIDGET(win->message_view));
 
     // Set up REPL
     gtk_combo_box_set_active (GTK_COMBO_BOX (win->repl_combobox), 0);
@@ -603,45 +541,11 @@ burro_debug_window_update_cycle_label (BurroDebugWindow *win, const char *str)
     gtk_label_set_text (win->duty_cycle_label, str);
 }
 
-void
-burro_debug_window_log_string (BurroDebugWindow *win,
-                               GLogLevelFlags log_level,
-                               const char *message)
-{
-    GtkTextBuffer *msgstore = win->message_store;
-    GtkTextIter iter;
-
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-    gtk_text_buffer_place_cursor (msgstore, &iter);
-
-    if (log_level == G_LOG_LEVEL_ERROR
-        || log_level == G_LOG_LEVEL_CRITICAL)
-        console_write_icon ("dialog-error");
-    else if (log_level == G_LOG_LEVEL_WARNING)
-        console_write_icon ("dialog-warning");
-    else
-        console_write_icon ("dialog-information");
-
-    gtk_text_buffer_insert_at_cursor (msgstore, "\t", -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, message, -1);
-    gtk_text_buffer_insert_at_cursor (msgstore, "\n", -1);
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-
-    gtk_text_view_scroll_to_iter (win->message_view,
-                                  &iter,
-                                  0.0, TRUE, 0.0, 1.0);
-    GtkAdjustment *vadj
-        = gtk_scrolled_window_get_vadjustment(win->message_scrolled_window);
-    gtk_adjustment_set_value(vadj,
-                             gtk_adjustment_get_upper(vadj)
-                             - gtk_adjustment_get_page_size(vadj));
-
-}
 
 SCM_DEFINE (G_burro_debug_win_console_write, "console-write-bytevector", 3, 0, 0,
             (SCM bv, SCM _index, SCM _count), "\
 Takes the bytes from STORE between INDEX and INDEX + COUNT and writes\n\
-them to Message window.  It returns the number of bytes actually\n\
+them to the structured log.  It returns the number of bytes actually\n\
 written.")
 {
     size_t count = scm_to_size_t (_count);
@@ -649,46 +553,16 @@ written.")
     if (count == 0)
         return scm_from_int(0);
 
-    if (!debug_window_cur)
-    {
-        fputs(SCM_BYTEVECTOR_CONTENTS(bv) + index, stderr);
-        return _count;
-    }
-
-    GtkTextBuffer *msgstore = debug_window_cur->message_store;
-
-    // The sandbox should never be allowed to fill up all the memory
-    // with junk text.
-    gint totsize = gtk_text_buffer_get_char_count (msgstore);
-    if (totsize > 10*1024)
-    {
-        GtkTextIter start, halfway;
-        gtk_text_buffer_get_iter_at_offset (msgstore, &start, 0);
-        gtk_text_buffer_get_iter_at_offset (msgstore, &halfway, totsize / 2);
-        gtk_text_buffer_delete (msgstore, &start, &halfway);
-    }
-
-    GtkTextIter iter;
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-    gtk_text_buffer_place_cursor (msgstore, &iter);
-    gtk_text_buffer_insert_at_cursor (msgstore,
-                                      SCM_BYTEVECTOR_CONTENTS(bv) + index,
-                                      count);
-    gtk_text_buffer_get_end_iter (msgstore, &iter);
-
-    gtk_text_view_scroll_to_iter (debug_window_cur->message_view,
-                                  &iter,
-                                  0.0, TRUE, 0.0, 1.0);
-    GtkAdjustment *vadj
-        = gtk_scrolled_window_get_vadjustment(debug_window_cur->message_scrolled_window);
-    gtk_adjustment_set_value(vadj,
-                             gtk_adjustment_get_upper(vadj)
-                             - gtk_adjustment_get_page_size(vadj));
-
+    char *msg = g_malloc(count + 1);
+    memcpy (msg, SCM_BYTEVECTOR_CONTENTS(bv) + index, count);
+    msg[count] = '\0';
+    g_log_structured (G_LOG_DOMAIN, G_LOG_LEVEL_MESSAGE,
+                      "MESSAGE", msg);
+    free (msg);
     return _count;
 }
 
-
+#if 0
 static void
 console_write_icon (const gchar *c_icon_name)
 {
@@ -733,6 +607,7 @@ Writes the icon, given by its icon theme name, to the console.")
     free (c_icon_name);
     return SCM_BOOL_T;
 }
+#endif
 
 SCM_DEFINE (G_debug_debug_peek_append, "debug-peek-append", 3, 0, 0,
             (SCM label, SCM value, SCM stack), "")

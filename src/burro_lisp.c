@@ -32,7 +32,6 @@ static SCM add_to_load_path (void *path);
 static void create_burro_engine_module();
 static SCM scm_init_burro_engine_module (void *data);
 static void init_burro_engine (void *unused);
-static SCM _default_error_handler (void *data, SCM key, SCM vals);
 
 SCM burro_lisp_new ()
 {
@@ -59,7 +58,6 @@ SCM burro_lisp_new ()
 static void
 add_site_dir_to_load_path()
 {
-    char *errstr = NULL;
     char *guilesitedir = NULL;
     SCM ret;
     
@@ -72,14 +70,12 @@ add_site_dir_to_load_path()
     {
         ret = scm_c_catch (SCM_BOOL_T,
                            add_to_load_path, guilesitedir,
-                           _default_error_handler,
-                           (void *) &errstr,
+                           default_error_handler,
+                           NULL,
                            NULL, NULL);
         if (scm_is_false (ret))
         {
             g_critical ("Could not add '%s' to Guile load path", guilesitedir);
-            g_critical(errstr);
-            free (errstr);
         }
         free (guilesitedir);
     }
@@ -95,24 +91,29 @@ add_to_load_path (void *path)
     return val;
 }
 
+static SCM
+use_module (void *x)
+{
+    scm_c_use_module ((char *) x);
+    return SCM_UNSPECIFIED;
+}
+
 static void
 create_burro_engine_module()
 {
     // Loading the internal Burro functions.
-    SCM burro_module;
-    char *err_string = NULL;
-    burro_module = scm_c_catch (SCM_BOOL_T,
-                                scm_init_burro_engine_module, NULL,
-                                _default_error_handler,
-                                (void *) &err_string,
-                                NULL, NULL);
-    if (scm_is_false (burro_module))
-    {
-        g_critical(err_string);
-        free (err_string);
-    }
-    else
-        scm_c_use_module ("burro");
+    SCM burro_engine =  scm_c_catch (SCM_BOOL_T,
+                                     scm_init_burro_engine_module, NULL,
+                                     default_error_handler,
+                                     NULL,
+                                     NULL, NULL);
+    if (scm_is_true (burro_engine))
+        scm_c_catch (SCM_BOOL_T,
+                     use_module, (void *)"burro",
+                     default_error_handler,
+                     NULL,
+                     NULL, NULL);        
+        
 }
 
 static SCM
@@ -130,13 +131,13 @@ init_burro_engine (void *unused)
     canvas_init_guile_procedures();
 }
 
-static SCM
-_default_error_handler (void *data, SCM key, SCM vals)
+SCM
+default_error_handler (void *data, SCM key, SCM vals)
 {
-    if (data == NULL)
-        return SCM_BOOL_F;
+    /* if (data == NULL) */
+    /*     return SCM_BOOL_F; */
   
-    char **err_string = (char **) data;
+    /* char **err_string = (char **) data; */
     char *c_key;
     SCM subr, message, args, rest;
     SCM message_args, formatted_message;
@@ -152,7 +153,9 @@ _default_error_handler (void *data, SCM key, SCM vals)
     else
         c_key = NULL;
 
-    if (c_key && (strcmp (c_key, "unbound-variable") == 0)) {
+    if (c_key && ((!strcmp (c_key, "unbound-variable"))
+                  || (!strcmp (c_key, "wrong-type-arg"))
+                  || (!strcmp (c_key, "misc-error")))) {
     
         subr = scm_list_ref (vals, scm_from_int (0));
         message = scm_list_ref (vals, scm_from_int (1));
@@ -177,9 +180,42 @@ _default_error_handler (void *data, SCM key, SCM vals)
                                                scm_from_locale_string ("Error ~S: ~S~%"),
                                                scm_list_2 (key, vals));
 
-    *err_string = scm_to_locale_string (formatted_message);
+    char *msg = scm_to_utf8_string (formatted_message);
+    g_log_structured (G_LOG_DOMAIN,
+                      G_LOG_LEVEL_ERROR,
+                      "KEY", c_key ? c_key : "NONE",
+                      "MESSAGE", msg);
+    free (msg);
+    free (c_key);
 
     return SCM_BOOL_F;
+}
+
+static SCM
+public_ref_burro_make_sandbox (void *unused)
+{
+    return scm_c_public_ref("burro", "make-sandbox");
+}
+
+static SCM
+public_ref_burro_load_file_into_sandbox (void *unused)
+{
+    return scm_c_public_ref("burro", "load-file-into-sandbox");
+}
+
+static SCM
+make_sandbox_with_path (void *c_path)
+{
+    SCM sandbox_func = public_ref_burro_load_file_into_sandbox (NULL);
+    SCM s_path = scm_from_locale_string (c_path);
+    return scm_call_1 (sandbox_func, s_path);
+}
+
+static SCM
+make_sandbox (void *unused)
+{
+    SCM sandbox_func = public_ref_burro_make_sandbox (NULL);
+    return scm_call_0(sandbox_func);
 }
 
 SCM
@@ -189,16 +225,21 @@ burro_make_sandbox (GFile *file, char **err_string)
     SCM sandbox;
     if (file)
     {
-        SCM sandbox_func = scm_c_public_ref("burro", "load-file-into-sandbox");
         char *c_path = g_file_get_path (file);
-        SCM s_path = scm_from_locale_string (c_path);
+        sandbox =  scm_c_catch (SCM_BOOL_T,
+                                     make_sandbox_with_path, c_path,
+                                     default_error_handler,
+                                     NULL,
+                                     NULL, NULL);
         g_free (c_path);
-        sandbox = scm_call_1 (sandbox_func, s_path);
     }
     else
     {
-        SCM sandbox_func = scm_c_public_ref("burro", "make-sandbox");
-        sandbox = scm_call_0(sandbox_func);
+        sandbox =  scm_c_catch (SCM_BOOL_T,
+                                make_sandbox, NULL,
+                                default_error_handler,
+                                NULL,
+                                NULL, NULL);
     }
 
     if (scm_is_string (sandbox))

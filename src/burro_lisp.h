@@ -32,5 +32,6 @@ SCM burro_lisp_new ();
 /** Parse the contents of the file into the current module.
  */
 SCM burro_make_sandbox (GFile *file, char **err_string);
+SCM default_error_handler (void *data, SCM key, SCM vals);
 
 #endif

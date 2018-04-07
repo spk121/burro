@@ -29,6 +29,7 @@ burro_engine_SOURCES = \
  burro_debug_window.c burro_debug_window.h burro_debug_window.x \
  burro_lisp.c burro_lisp.h \
  burro_lineedit.c burro_lineedit.h \
+ burro_journal.c burro_journal.h \
  burro_paths.h \
  burro_preferences_dialog.c burro_preferences_dialog.h \
  burro_repl.c burro_repl.h \
@@ -97,14 +98,18 @@ CLEANFILES = $(DOT_X_FILES) burro_paths.h
 burro_engine_CFLAGS = \
   -std=c11 \
   -fvisibility=hidden \
+  -DG_LOG_USE_STRUCTURED \
+  -DG_LOG_DOMAIN=\"burro\" \
   $(DEPS_CFLAGS) \
   $(GUILE_CFLAGS)
 burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
 burro_engine_DEPENDENCIES = libburrocanvas.la
 
 libburrocanvas_la_CFLAGS = \
-  -std=c11 -pedantic \
+  -std=c11 \
   -fvisibility=hidden \
+  -DG_LOG_USE_STRUCTURED \
+  -DG_LOG_DOMAIN=\"burro-canvas\" \
   $(DEPS_CFLAGS) \
   $(GUILE_CFLAGS) \
   $(VORBISFILE_CFLAGS)

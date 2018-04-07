@@ -32,7 +32,7 @@
 (define sandbox-bindings
   '(((burro debug)
      console-info
-     console-error
+     ;; console-error
      watch)
   
     ((burro colors)

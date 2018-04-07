@@ -304,8 +304,8 @@ static void cb_audio_stream_write(pa_stream *p, size_t nbytes, void *userdata)
     g_return_if_fail (p != NULL);
 
     pa_usec_t usec = xpa_stream_get_time (p);
-    if (usec != 0)
-        g_debug("Pulseaudio time is %"PRIu64", requests %zu samples", usec, n);
+    // if (usec != 0)
+    //    g_debug("Pulseaudio time is %"PRIu64", requests %zu samples", usec, n);
     if (n > AM_BUFFER_SIZE)
     {
         g_warning ("Pulseaudio buffer read overflow %zu > %u",

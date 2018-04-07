@@ -3,7 +3,7 @@
   #:use-module (rnrs io ports)
   #:use-module (ice-9 pretty-print)
   #:export (console-info
-	    console-error
+	    ;; console-error
 	    watch))
 
 (define-public *console-port*
@@ -31,32 +31,30 @@ developer console.  MESSAGE can contains '~A' and '~S' escapes.  When
 printed, the escapes are replaced with the corresponding number of
 ARGS.  '~A' is a human-friendly representation of the argument.  '~S'
 is a more machine-friendly representation."
-  (console-write-icon "dialog-information")
-  (display "\t" *console-port*)
-  (apply console-log-inner (append (list message) args))
-  (newline *console-port*))
+  (apply console-log-inner (append (list message) args)))
 
-(define-public (warn . x)
-  "Writes a warning icon and the MESSAGE to a new line on developer
-console.  MESSAGE can contains '~A' and '~S' escapes.  When printed,
-the escapes are replaced with the corresponding number of ARGS.  '~A'
-is a human-friendly representation of the argument.  '~S' is a more
-machine-friendly representation."
-  (console-write-icon "dialog-warning")
-  (display "\t" *console-port*)
-  (apply console-log-inner x)
-  (newline *console-port*))
 
-(define-public (console-error . x)
-  "Writes an error icon and the MESSAGE to a new line on developer
-console.  MESSAGE can contains '~A' and '~S' escapes.  When printed,
-the escapes are replaced with the corresponding number of ARGS.  '~A'
-is a human-friendly representation of the argument.  '~S' is a more
-machine-friendly representation."
-  (console-write-icon "dialog-error")
-  (display "\t" *console-port*)
-  (apply console-log-inner x)
-  (newline *console-port*))
+;; (define-public (warn . x)
+;;   "Writes a warning icon and the MESSAGE to a new line on developer
+;; console.  MESSAGE can contains '~A' and '~S' escapes.  When printed,
+;; the escapes are replaced with the corresponding number of ARGS.  '~A'
+;; is a human-friendly representation of the argument.  '~S' is a more
+;; machine-friendly representation."
+;;   (console-write-icon "dialog-warning")
+;;   (display "\t" *console-port*)
+;;   (apply console-log-inner x)
+;;   (newline *console-port*))
+
+;; (define-public (console-error . x)
+;;   "Writes an error icon and the MESSAGE to a new line on developer
+;; console.  MESSAGE can contains '~A' and '~S' escapes.  When printed,
+;; the escapes are replaced with the corresponding number of ARGS.  '~A'
+;; is a human-friendly representation of the argument.  '~S' is a more
+;; machine-friendly representation."
+;;   (console-write-icon "dialog-error")
+;;   (display "\t" *console-port*)
+;;   (apply console-log-inner x)
+;;   (newline *console-port*))
 
 (define-public (watch . stuff)
   "Writes the arguments passed to it to the developer console,

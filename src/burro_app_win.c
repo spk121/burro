@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <libguile.h>
+#include <unistd.h>
 
 #include "burro_app.h"
 #include "burro_app_win.h"
@@ -290,6 +291,56 @@ signal_repl_requested (GObject *obj, gpointer user_data)
     burro_repl_enable (win->repl);
 }
 
+static SCM
+call_pm_set_mouse_move (void *_win)
+{
+    BurroAppWindow *win = BURRO_APP_WINDOW (_win);
+    
+    scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-move"),
+                scm_from_double (win->mouse_move_x),
+                scm_from_double (win->mouse_move_y));
+    return SCM_BOOL_T;
+}
+
+static SCM
+call_pm_set_mouse_click (void *_win)
+{
+    BurroAppWindow *win = BURRO_APP_WINDOW (_win);
+    
+    scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-click"),
+                scm_from_double (win->mouse_click_x),
+                scm_from_double (win->mouse_click_y));
+    return SCM_BOOL_T;
+}
+
+static SCM
+call_pm_set_text_move (void *_win)
+{
+    BurroAppWindow *win = BURRO_APP_WINDOW (_win);
+    scm_call_1 (scm_c_public_ref ("burro pm", "pm-set-text-move"),
+                scm_from_int (win->text_move_location));
+    return SCM_BOOL_T;
+}
+
+static SCM
+call_pm_set_text_click (void *_win)
+{
+    BurroAppWindow *win = BURRO_APP_WINDOW (_win);
+    scm_call_1 (scm_c_public_ref ("burro pm", "pm-set-text-click"),
+                scm_from_int (win->text_click_location));
+    return SCM_BOOL_T;
+}
+
+static SCM
+call_pm_update (void *_pdt)
+{
+    gint64 *pdt = _pdt;
+    scm_call_1 (scm_c_public_ref ("burro pm", "pm-update"),
+                scm_from_int64(*pdt));
+    return SCM_BOOL_T;
+}
+                
+
 static gboolean
 game_loop (gpointer user_data)
 {
@@ -325,43 +376,45 @@ game_loop (gpointer user_data)
                 // Pass any new mouse clicks and other events to the process manager
                 if (win->have_mouse_move_event)
                 {
-                    // g_message("sending mouse move to pm, %f %f", win->mouse_move_x, win->mouse_move_y);
-                    scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-move"),
-                                scm_from_double (win->mouse_move_x),
-                                scm_from_double (win->mouse_move_y));
+                    scm_c_catch (SCM_BOOL_T,
+                                 call_pm_set_mouse_move, win,
+                                 default_error_handler,
+                                 NULL, NULL, NULL);
                     win->have_mouse_move_event = FALSE;
                 }
                 if (win->have_mouse_click_event)
                 {
                     // g_message("sending mouse click to pm, %f %f", win->mouse_click_x, win->mouse_click_y);
-                    scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-click"),
-                                scm_from_double (win->mouse_click_x),
-                                scm_from_double (win->mouse_click_y));
+                    scm_c_catch (SCM_BOOL_T,
+                                 call_pm_set_mouse_click, win,
+                                 default_error_handler,
+                                 NULL, NULL, NULL);
                     win->have_mouse_click_event = FALSE;
                 }
                 if (win->have_text_move_event)
                 {
                     // g_message("sending text move to pm, %d", win->text_move_location);
-                    scm_call_1 (scm_c_public_ref ("burro pm", "pm-set-text-move"),
-                                scm_from_int (win->text_move_location));
+                    scm_c_catch (SCM_BOOL_T,
+                                 call_pm_set_text_move, win,
+                                 default_error_handler,
+                                 NULL, NULL, NULL);
                     win->have_text_move_event = FALSE;
                 }
                 if (win->have_text_click_event)
                 {
                     // g_message("sending text click to pm, %d", win->text_click_location);
-                    scm_call_1 (scm_c_public_ref ("burro pm", "pm-set-text-click"),
-                                scm_from_int (win->text_click_location));
+                    scm_c_catch (SCM_BOOL_T,
+                                 call_pm_set_text_click, win,
+                                 default_error_handler,
+                                 NULL, NULL, NULL);
                     win->have_text_click_event = FALSE;
                 }
 
                 // Let the guile processes run
-                SCM ret = scm_call_1 (scm_c_public_ref ("burro pm", "pm-update-or-error-string"),
-                                      scm_from_int64(dt));
-                if (scm_is_string (ret))
-                {
-                    scm_call_1(scm_c_public_ref("burro debug", "console-error"),
-                               ret);
-                }
+                scm_c_catch (SCM_BOOL_T,
+                             call_pm_update, &dt,
+                             default_error_handler,
+                             NULL, NULL, NULL);
                 // Update subsystems
 
                 // Render things
@@ -412,22 +465,6 @@ timeout_action_destroy (gpointer data)
 
 }
 
-static void
-log_func (const gchar *log_domain,
-          GLogLevelFlags log_level,
-          const gchar *message,
-          gpointer user_data)
-{
-    if (app_window_cur->debug_window)
-        burro_debug_window_log_string (app_window_cur->debug_window,
-                                       log_level,
-                                       message);
-    else
-        g_log_default_handler (log_domain,
-                               log_level,
-                               message,
-                               user_data);
-}
 
 static void
 burro_app_window_init (BurroAppWindow *win)
@@ -518,17 +555,6 @@ burro_app_window_init (BurroAppWindow *win)
                                        (gpointer) win,
                                        timeout_action_destroy);
 
-    // Alternative logging
-    win->log_handler_id = g_log_set_handler_full (NULL,
-                                                  G_LOG_LEVEL_ERROR
-                                                  | G_LOG_LEVEL_CRITICAL
-                                                  | G_LOG_LEVEL_WARNING
-                                                  | G_LOG_LEVEL_MESSAGE
-                                                  | G_LOG_LEVEL_INFO,
-                                                  log_func,
-                                                  NULL,
-                                                  NULL);
-
 
 }
 
@@ -575,9 +601,6 @@ burro_app_window_dispose (GObject *object)
 {
     BurroAppWindow *win;
     win = BURRO_APP_WINDOW (object);
-
-    g_log_remove_handler (NULL, win->log_handler_id);
-    g_log_set_default_handler (g_log_default_handler, NULL);
 
     win->game_loop_quitting = TRUE;
 

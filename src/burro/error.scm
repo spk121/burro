@@ -22,7 +22,7 @@ that print-exception doesn't handle."
 
 (define (find-a-location stack)
   (pk "stack" (list stack (stack-length stack)))
-  (let loop ((index (1- (stack-length stack)))
+  (let loop ((index (- (stack-length stack) 3))
 	     (output ""))
     (pk "stack loop iter" index)
     (if (>= index 0)
@@ -54,7 +54,7 @@ that print-exception doesn't handle."
 			   (lambda (port)
 			     (print-exception+ port #f key args)))))
 	     (string-append errstr
-			    "\t"
+			    "\n"
 			    (find-a-location stack))))
 	 (lambda (key . args)
 	   (set! stack (make-stack #t 1 1))))))))

@@ -11,7 +11,7 @@
   #:use-module (burro debug)
   #:use-module (ice-9 format)
   #:export(pm-has-processes?
-	   pm-update-or-error-string
+	   pm-update
 	   pm-attach
 	   pm-detach
 	   pm-detach-all
@@ -183,7 +183,7 @@
   ;; Return whether there are any processes remaining.
   (pm-has-processes?))
 
-(define (pm-update-or-error-string delta-milliseconds)
-  ;;(false-if-exception (pm-update delta-milliseconds)))
-  (string-if-exception
-   (pm-update delta-milliseconds)))
+;; (define (pm-update-or-error-string delta-milliseconds)
+;;   ;;(false-if-exception (pm-update delta-milliseconds)))
+;;   (string-if-exception
+;;    (pm-update delta-milliseconds)))
