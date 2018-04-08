@@ -5,18 +5,18 @@
    Went with vorbisfile.
 ** DONE Put pulseaudio loop in game loop
    So pause works and duty cycle works.
-** Better directory and game loading handling
+** TODO Better directory and game loading handling
    Where should we be looking for jpg, png, and opus files?
    What is doctrinaire?  What is safe?
 
    I think it should probably be
    - the directory where the script is.
-   - or the user data dir $HOME/.local/share/burro
-   - or the standard data dirs /usr/local/share/burro or /usr/share/burro
+   - (maybe) user data dir $HOME/.local/share/burro
+   - (maybe) standard data dirs /usr/local/share/burro or /usr/share/burro
 ** TODO API vs internal linking
    Need to do the whole __visibility__((default)__,
    __declspec(dllexport) thing.
-** Guile port handling
+** DONE Guile port handling
 ** TODO The big BG rewrite
    BG is a mess.
 ** Sandbox Debugger
@@ -37,7 +37,9 @@
 ** Valgrind: Change canvas->surface to have static data store?
    Use cairo_image_surface_create_for_data() and a static
    data store.
-** Keep a console store and watch store even when debug window hidden
+** Valgrind: burro_journal_send_alist_to_logger
+   I'm not sure what can be freed and when
+** DONE Keep a console store and watch store even when debug window hidden
 * Scheme library
 ** display, write, and format for sandbox
 ** Twine helper functions

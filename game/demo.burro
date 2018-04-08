@@ -70,7 +70,7 @@
      (a (@ (action ,Six)) "click me"))))
 
 (define (Six)
-  (load-image-file "../game/shop.jpg" VRAM_A)
+  (load-image-file "shop.jpg" VRAM_A)
   (bg-setup BG_1 VRAM_A)
   (bg-set-brightness 0.4)
   (set-font-color "green")
@@ -85,7 +85,7 @@
      (a (@ (action ,Seven)) "click me"))))
 
 (define (Seven)
-  (load-audio-file "../game/waltz2.ogg" VRAM_B)
+  (load-audio-file "waltz2.ogg" VRAM_B)
   (audio-channel-play 1 VRAM_B)
   (clickable-text
    `(markup

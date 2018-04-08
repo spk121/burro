@@ -107,6 +107,8 @@ vram_bank_name[VRAM_COUNT][10] = {
     [VRAM_J] = "VRAM_J",
 };
 
+static char *vram_path = NULL;
+
 static gboolean
 vram_validate_vram_bank_t (vram_bank_t x)
 {
@@ -176,6 +178,14 @@ vram_zero_bank (vram_bank_t bank)
     memset (vram_ptr[bank], 0, vram_size[bank] * sizeof(uint32_t));
 }
 
+void
+canvas_vram_set_path (const char *path)
+{
+    free (vram_path);
+    vram_path = NULL;
+    if (path)
+        vram_path = strdup(path);
+}
 
 static char *vram_size_string(int i)
 {
@@ -328,6 +338,26 @@ of the VRAM bank.")
     return ret;
 }
 
+gboolean
+canvas_vram_is_valid_filename (const char *filename)
+{
+    g_return_val_if_fail (filename != NULL && strlen(filename) > 0, FALSE);
+    
+    size_t len = strlen(filename);
+    if (filename[len-1] == G_DIR_SEPARATOR)
+        return FALSE;
+
+    /* We only allow one level deep. */
+    gchar *path = g_path_get_dirname(filename);
+    int test = (!strcmp(path, ".")
+                || (!strrchr(path, G_DIR_SEPARATOR)
+                    && !strrchr(path, ":")
+                    && strcmp (path, "..")));
+    free(path);
+
+    return test;
+}
+
 static gboolean
 set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
 {
@@ -335,14 +365,26 @@ set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
                           && vram_index < VRAM_COUNT, FALSE);
     g_return_val_if_fail (filename != NULL, FALSE);
 
-    GdkPixbuf *pb = xgdk_pixbuf_new_from_file (filename);
+    if (!canvas_vram_is_valid_filename (filename))
+    {
+        g_message ("Didn't load image file %s: filename is invalid", filename);
+        return FALSE;
+    }
+
+    char *pathname;
+    if (vram_path)
+        pathname = g_build_filename (vram_path, filename, NULL);
+    else
+        pathname = strdup(filename);
+    GdkPixbuf *pb = xgdk_pixbuf_new_from_file (pathname);
+    g_free (pathname);
     if (pb == NULL)
         return FALSE;
   
-    if (xgdk_pixbuf_is_argb32 (pb) == FALSE && xgdk_pixbuf_is_xrgb32 (pb) == FALSE)
+    if (!xgdk_pixbuf_is_argb32 (pb) && !xgdk_pixbuf_is_xrgb32 (pb))
     {
         xg_object_unref (pb);
-        g_critical ("failed to load %s as an ARGB32 or XRGB32 pixbuf", filename);
+        g_critical ("%s is not a 24-bit or 32-bit color pixbuf", filename);
         return FALSE;
     }
     else
@@ -580,6 +622,13 @@ of supported formats.")
     int vram = scm_to_int(index);
     char *path = scm_to_locale_string (filename);
 
+    if (!canvas_vram_is_valid_filename (path))
+    {
+        g_message ("load-audio-file: filename %s is invalid", path);
+        free (path);
+        return SCM_BOOL_F;
+    }
+    
     if (!g_str_has_suffix (path, ".ogg")
         && g_str_has_suffix (path, ".ogv"))
     {
@@ -587,8 +636,15 @@ of supported formats.")
         free (path);
         return SCM_BOOL_F;
     }
+
+    char *pathname;
+    if (vram_path)
+        pathname = g_build_filename (vram_path, path, NULL);
+    else
+        pathname = strdup(path);
     
-    GFile *f = g_file_new_for_path (path);
+    GFile *f = g_file_new_for_path (pathname);
+    g_free (pathname);
     GError *error = NULL;
     GFileInfo *fi = g_file_query_info (f, 
                                        "standard::size,standard::display-name",

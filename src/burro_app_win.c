@@ -52,6 +52,7 @@ struct _BurroAppWindow
     SCM burro_module;           /* The (burro) module */
     SCM sandbox;                /* Opened files are parsed into this
                                  * anonymous module */
+    char *sandbox_path;
     BurroRepl *repl;
 
     // Log handler
@@ -647,6 +648,21 @@ burro_app_window_open (BurroAppWindow *win,
 {
     char *err_string;
     win->sandbox = burro_make_sandbox (file, &err_string);
+    if (file)
+    {
+        char *full = g_file_get_path (file);
+        char *dir = g_path_get_dirname (full);
+        canvas_vram_set_path(dir);
+        free (win->sandbox_path);
+        win->sandbox_path = dir;
+        g_free (full);
+    }
+    else
+    {
+        free (win->sandbox_path);
+        win->sandbox_path = NULL;
+        canvas_vram_set_path(NULL);
+    }
 
     if (scm_is_false (win->sandbox))
     {

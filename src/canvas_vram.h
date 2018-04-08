@@ -215,6 +215,8 @@ int vram_get_type (int z);
 int vram_get_width (int z);
 int vram_get_height (int z);
 
+DLL_PUBLIC void canvas_vram_set_path (const char *path);
+
 #endif
 
 /*
