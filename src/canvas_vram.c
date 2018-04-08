@@ -351,7 +351,7 @@ canvas_vram_is_valid_filename (const char *filename)
     gchar *path = g_path_get_dirname(filename);
     int test = (!strcmp(path, ".")
                 || (!strrchr(path, G_DIR_SEPARATOR)
-                    && !strrchr(path, ":")
+                    && !strrchr(path, ':')
                     && strcmp (path, "..")));
     free(path);
 
@@ -490,7 +490,7 @@ vram_audio_read (void *ptr, size_t size, size_t nmemb, void *context)
 }
 
 int
-vram_audio_seek (void *context, gint64 offset, int whence)
+vram_audio_seek (void *context, ogg_int64_t offset, int whence)
 {
     vram_io_context_t *io = (vram_io_context_t *) context;
     gint64 start, end;

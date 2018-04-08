@@ -7,6 +7,8 @@
 #include "canvas_bg.h"
 #include "canvas_lib.h"
 
+#define __maybe_unused __attribute__((unused))
+
 struct _BurroCanvas
 {
     GtkDrawingArea parent;
@@ -47,7 +49,9 @@ canvas_draw (GtkWidget *widget, cairo_t *cr)
 }
 
 static int
-tick_cb (GtkWidget *widget, GdkFrameClock *frame_clock, void *user_data)
+tick_cb (GtkWidget *widget,
+         GdkFrameClock *frame_clock __maybe_unused,
+         void *user_data __maybe_unused)
 {
     if (gtk_widget_is_visible (widget))
     {
@@ -145,12 +149,14 @@ static void paint_transformed_image (cairo_t *context,
 }
 
 
-static void draw_background_layer (bg_index_t layer)
+static void draw_background_layer (int layer)
 {
     cairo_surface_t *surf;
     cairo_matrix_t matrix;
     double scroll_x, scroll_y, rotation_center_x, rotation_center_y;
     double rotation, expansion;
+    g_assert (layer >= BG_1 && layer <= BG_4);
+
 
     surf = canvas_bg_get_cairo_surface (layer);
     cairo_surface_mark_dirty (surf);
@@ -197,8 +203,8 @@ static void draw ()
 
     for (int z = CANVAS_ZLEVEL_COUNT - 1; z >= 0; z --)
     {
-        if (canvas_bg_is_shown (z))
-            draw_background_layer (z);
+        if (canvas_bg_is_shown (z + BG_1))
+            draw_background_layer (z + BG_1);
     }
 #if 0
     for (int priority = PRIORITY_COUNT - 1; priority >= 0; priority --)
@@ -285,7 +291,8 @@ burro_canvas_init (BurroCanvas *win)
 // Do I need delete here? The docs say "Signal emitted if a user
 // requests that a toplevel window is closed".
 static gboolean
-canvas_delete (GtkWidget *widget, GdkEventAny *eveny)
+canvas_delete (GtkWidget *widget,
+               GdkEventAny *event __maybe_unused)
 {
     gtk_widget_destroy (widget);
     return TRUE;
@@ -540,12 +547,12 @@ canvas_xy_to_index (BurroCanvas *canvas,
     y -= CANVAS_MARGIN;
     x *=  PANGO_SCALE;
     y *=  PANGO_SCALE;
-    ret = pango_layout_xy_to_index (canvas_cur->layout, x, y, index, trailing);
+    ret = pango_layout_xy_to_index (canvas->layout, x, y, index, trailing);
     if (!ret)
         return FALSE;
 
     /* The UTF-8 index needs to be converted into UTF32 index. */
-    const char *str = pango_layout_get_text (canvas_cur->layout);
+    const char *str = pango_layout_get_text (canvas->layout);
     int i = 0;
     int offset = 0;
     while (i < *index)

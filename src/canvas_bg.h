@@ -30,17 +30,17 @@
 
 /** Enumeration of the 4 background layer IDs */
 typedef enum {
-    BG_0 = 0,
+    BG_NONE = 0,
     BG_1 = 1,
     BG_2 = 2,
     BG_3 = 3,
+    BG_4 = 4,
 } bg_index_t;
 
 
 /** Allowed background types, used in bg_init */
 typedef enum {
     BG_TYPE_NONE,
-    BG_TYPE_MAP, 
     BG_TYPE_BMP,
 } bg_type_t;
 
@@ -48,7 +48,7 @@ DLL_LOCAL void canvas_bg_init (void);
 DLL_LOCAL cairo_surface_t *canvas_bg_get_cairo_surface (bg_index_t id);
 DLL_LOCAL gboolean canvas_bg_is_shown (bg_index_t id);
 DLL_LOCAL gboolean canvas_bg_is_dirty (bg_index_t id);
-DLL_PUBLIC gboolean canvas_bg_set_clean (bg_index_t z);
+DLL_PUBLIC void canvas_bg_set_clean (bg_index_t z);
 DLL_LOCAL void canvas_bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
                        double *rotation_center_x, double *rotation_center_y,
                        double *rotation, double *expansion);

@@ -3,6 +3,7 @@
 
 #include <libguile.h>
 #include <gtk/gtk.h>
+#include <vorbis/vorbisfile.h>
 #include "visibility.h"
 
 /* VRAM
@@ -187,7 +188,7 @@ typedef struct vram_io_context_tag {
 
 vram_io_context_t *vram_audio_open (int index);
 size_t vram_audio_read (void *ptr, size_t size, size_t nmemb, void *context);
-int vram_audio_seek (void *context, gint64 offset, int whence);
+int vram_audio_seek (void *context, ogg_int64_t offset, int whence);
 int vram_audio_close (void *context);
 long vram_audio_tell (void *context);
 

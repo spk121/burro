@@ -98,22 +98,22 @@ typedef struct
 bg_t bg;
 
 const char
-bg_index_name[BG_3 + 1][11] = {
-    [BG_0] = "BG_0",
+bg_index_name[BG_4 + 1][7] = {
     [BG_1] = "BG_1",
     [BG_2] = "BG_2",
     [BG_3] = "BG_3",
+    [BG_4] = "BG_4",
 };
 
 
 ////////////////////////////////////////////////////////////////
 
 static cairo_surface_t *
-bg_render_to_cairo_surface (bg_index_t id);
+bg_render_to_cairo_surface (int id);
 /// static cairo_surface_t *
 // bg_render_map_to_cairo_surface (bg_index_t id);
 static cairo_surface_t *
-bg_render_bmp_to_cairo_surface (bg_index_t id);
+bg_render_bmp_to_cairo_surface (int id);
 // static void
 // bg_update (bg_index_t id);
 
@@ -123,11 +123,11 @@ bg_render_bmp_to_cairo_surface (bg_index_t id);
 static gboolean
 bg_validate_int_as_bg_index_t (int x)
 {
-    return (x >= (int) BG_0 && x <= (int) BG_3);
+    return (x >= (int) BG_1 && x <= (int) BG_4);
 }
 
 static gboolean
-bg_validate_int_as_bg_type_t (int x)
+bg_validate_index (int x)
 {
     return (x >= (int) BG_TYPE_NONE && x <= (int) BG_TYPE_BMP);
 }
@@ -135,13 +135,13 @@ bg_validate_int_as_bg_type_t (int x)
 static gboolean
 bg_validate_bg_index_t (bg_index_t x)
 {
-    return (x >= BG_0 && x <= BG_3);
+    return (x >= BG_1 && x <= BG_4);
 }
 
 static const char *
-bg_get_index_name (bg_index_t index)
+bg_get_index_name (int index)
 {
-    g_assert (bg_validate_bg_index_t (index));
+    g_assert (bg_valididate_index (index));
     return bg_index_name[index];
 }
 
@@ -172,14 +172,16 @@ canvas_bg_init ()
 }
 
 cairo_surface_t *
-canvas_bg_get_cairo_surface (bg_index_t id)
+canvas_bg_get_cairo_surface (int id)
 {
-    g_assert (bg.bg[id].type != BG_TYPE_NONE);
-    g_assert (bg.surf[id] != NULL);
-    g_assert (cairo_surface_get_reference_count (bg.surf[id]) > 0);
-    g_assert (cairo_surface_get_reference_count (bg.surf[id]) < 10);
+    g_assert (id >= BG_1 && id <= BG_4);
+    int i = id - BG_1;
+    g_assert (bg.bg[i].type != BG_TYPE_NONE);
+    g_assert (bg.surf[i] != NULL);
+    g_assert (cairo_surface_get_reference_count (bg.surf[i]) > 0);
+    g_assert (cairo_surface_get_reference_count (bg.surf[i]) < 10);
 
-    return bg.surf[id];
+    return bg.surf[i];
 }
 
 
@@ -189,7 +191,7 @@ canvas_bg_is_dirty (bg_index_t z)
     return bg.bg[z].dirty;
 }
 
-gboolean
+void
 canvas_bg_set_clean (bg_index_t z)
 {
     bg.bg[z].dirty = FALSE;
@@ -338,8 +340,6 @@ bg_show (bg_index_t id)
 static cairo_surface_t *
 bg_render_to_cairo_surface (bg_index_t id)
 {
-    g_return_val_if_fail (id >= 0 && id < BG_BACKGROUNDS_COUNT, NULL);
-
     switch (bg.bg[id].type)
     {
     case BG_TYPE_NONE:

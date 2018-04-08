@@ -6,6 +6,8 @@
 #include "canvas_lib.h"
 #include "canvas_vram.h"
 
+#define __maybe_unused __attribute__((unused))
+
 #define BURRO_PROP_MEDIA_ROLE "game"
 #define BURRO_PROP_APPLICATION_ID "com.lonelycactus.burroengine"
 #define BURRO_PROP_APPLICATION_NAME "BurroEngine"
@@ -245,7 +247,7 @@ am_update(int n)
                 for (int i = 0; i < am.channels[c].size - n; i ++)
                     am.channels[c].buffer[i] = am.channels[c].buffer[i + n];
                 am.channels[c].size -= n;
-                for (int i = am.channels[c].size; i < AM_BUFFER_SIZE; i ++)
+                for (unsigned i = am.channels[c].size; i < AM_BUFFER_SIZE; i ++)
                     am.channels[c].buffer[i] = 0.0;
             }
         }
@@ -254,7 +256,8 @@ am_update(int n)
 
 /* This callback gets called when our context changes state.  We
  * really only care about when it's ready or if it has failed. */
-static void cb_audio_context_state(pa_context *c, void *userdata)
+static void cb_audio_context_state(pa_context *c,
+                                   void *userdata __maybe_unused)
 {
     pulse.state = (int) xpa_context_get_state(c);
     switch(pulse.state)
@@ -289,7 +292,8 @@ static void cb_audio_context_state(pa_context *c, void *userdata)
 
 /* This callback is called when the server starts playback after an
  * underrun or on initial startup. */
-static void cb_audio_stream_started(pa_stream *p, void *userdata)
+static void cb_audio_stream_started(pa_stream *p __maybe_unused,
+                                    void *userdata __maybe_unused)
 {
     g_debug("PulseAudio started playback");
 }
@@ -297,15 +301,20 @@ static void cb_audio_stream_started(pa_stream *p, void *userdata)
 /* This is called when new data may be written to the stream.  If we
    have data, we can ship it, otherwise we just note that the stream is
    waiting.  */
-static void cb_audio_stream_write(pa_stream *p, size_t nbytes, void *userdata)
+static void cb_audio_stream_write(pa_stream *p,
+                                  size_t nbytes,
+                                  void *userdata __maybe_unused)
 {
     size_t n = nbytes / sizeof(float);
 
     g_return_if_fail (p != NULL);
 
+#if 0
     pa_usec_t usec = xpa_stream_get_time (p);
-    // if (usec != 0)
-    //    g_debug("Pulseaudio time is %"PRIu64", requests %zu samples", usec, n);
+    if (usec != 0)
+        g_debug("Pulseaudio time is %"PRIu64", requests %zu samples", usec, n);
+#endif
+    
     if (n > AM_BUFFER_SIZE)
     {
         g_warning ("Pulseaudio buffer read overflow %zu > %u",
