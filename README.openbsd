@@ -1,0 +1,10 @@
+It seems to build with the following invocation..
+
+AUTOCONF_VERSION=2.69 AUTOMAKE_VERSION=1.15 ./bootstrap.sh
+./configure CC=clang
+gmake
+
+I'm sorry that there is non-portable make in this.  It is not my fault.
+It comes from GLIB.
+
+I hope to also add support for OpenBSD's sound server, instead of Pulseaudio.
