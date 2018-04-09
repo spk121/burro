@@ -87,10 +87,10 @@ typedef struct
     double brightness;
 
     /** Storage for info on the background layers */
-    bg_entry_t bg[BG_BACKGROUNDS_COUNT];
+    bg_entry_t bg[BG_4 + 1];
 
     /** Cache for the Cairo renderings of background layers.  */
-    cairo_surface_t *surf[BG_BACKGROUNDS_COUNT];
+    cairo_surface_t *surf[BG_4 + 1];
 } bg_t;
 
 /** Static storage for all the background layers and their Cairo
@@ -99,11 +99,14 @@ bg_t bg;
 
 const char
 bg_index_name[BG_4 + 1][7] = {
+    [BG_NONE] = "BG_NONE",
     [BG_1] = "BG_1",
     [BG_2] = "BG_2",
     [BG_3] = "BG_3",
     [BG_4] = "BG_4",
 };
+
+static gboolean bg_validate_index (int x);
 
 
 ////////////////////////////////////////////////////////////////
@@ -111,38 +114,19 @@ bg_index_name[BG_4 + 1][7] = {
 static cairo_surface_t *
 bg_render_to_cairo_surface (int id);
 /// static cairo_surface_t *
-// bg_render_map_to_cairo_surface (bg_index_t id);
+// bg_render_map_to_cairo_surface (int id);
 static cairo_surface_t *
 bg_render_bmp_to_cairo_surface (int id);
 // static void
-// bg_update (bg_index_t id);
+// bg_update (int id);
 
 
 ////////////////
 
 static gboolean
-bg_validate_int_as_bg_index_t (int x)
-{
-    return (x >= (int) BG_1 && x <= (int) BG_4);
-}
-
-static gboolean
 bg_validate_index (int x)
 {
-    return (x >= (int) BG_TYPE_NONE && x <= (int) BG_TYPE_BMP);
-}
-
-static gboolean
-bg_validate_bg_index_t (bg_index_t x)
-{
-    return (x >= BG_1 && x <= BG_4);
-}
-
-static const char *
-bg_get_index_name (int index)
-{
-    g_assert (bg_valididate_index (index));
-    return bg_index_name[index];
+    return (x >= (int) BG_1 && x <= (int) BG_4);
 }
 
 void
@@ -150,7 +134,7 @@ canvas_bg_init ()
 {
     bg.colorswap = FALSE;
     bg.brightness = 1.0;
-    for (int i = 0; i < BG_BACKGROUNDS_COUNT; i ++)
+    for (int i = BG_1; i < BG_4; i ++)
     {
         bg.bg[i].enable = FALSE;
         bg.bg[i].type = BG_TYPE_NONE;
@@ -174,33 +158,35 @@ canvas_bg_init ()
 cairo_surface_t *
 canvas_bg_get_cairo_surface (int id)
 {
-    g_assert (id >= BG_1 && id <= BG_4);
-    int i = id - BG_1;
-    g_assert (bg.bg[i].type != BG_TYPE_NONE);
-    g_assert (bg.surf[i] != NULL);
-    g_assert (cairo_surface_get_reference_count (bg.surf[i]) > 0);
-    g_assert (cairo_surface_get_reference_count (bg.surf[i]) < 10);
+    g_assert (bg_validate_index (id));
+    
+    g_assert (bg.bg[id].type != BG_TYPE_NONE);
+    g_assert (bg.surf[id] != NULL);
+    g_assert (cairo_surface_get_reference_count (bg.surf[id]) > 0);
+    g_assert (cairo_surface_get_reference_count (bg.surf[id]) < 10);
 
-    return bg.surf[i];
+    return bg.surf[id];
 }
 
 
 gboolean
-canvas_bg_is_dirty (bg_index_t z)
+canvas_bg_is_dirty (int index)
 {
-    return bg.bg[z].dirty;
+    g_assert (bg_validate_index (index));
+    return bg.bg[index].dirty;
 }
 
 void
-canvas_bg_set_clean (bg_index_t z)
+canvas_bg_set_clean (int index)
 {
-    bg.bg[z].dirty = FALSE;
+    g_assert (bg_validate_index (index));
+    bg.bg[index].dirty = FALSE;
 }
 
 void
 canvas_bg_fini (void)
 {
-    for (int id = 0; id < BG_BACKGROUNDS_COUNT; id ++)
+    for (int id = BG_1; id <= BG_4; id ++)
     {
         if (bg.surf[id] != NULL)
             cairo_surface_destroy (bg.surf[id]);
@@ -209,7 +195,7 @@ canvas_bg_fini (void)
 }
 
 #if 0
-void bg_assign_memory (bg_index_t id, matrix_size_t siz, vram_bank_t bank)
+void bg_assign_memory (int id, matrix_size_t siz, vram_bank_t bank)
 {
     matrix_attach_to_vram (siz, bank, &(bg.bg[id].storage), &(bg.bg[id].data));
     bg.bg[id].size = siz;
@@ -252,20 +238,23 @@ adjust_colorval (uint32_t c32)
 }
 
 gboolean
-canvas_bg_is_shown (bg_index_t id)
+canvas_bg_is_shown (int id)
 {
+    g_assert (bg_validate_index (id));
     return bg.bg[id].enable;
 }
 
 static void
-bg_hide (bg_index_t id)
+bg_hide (int id)
 {
+    g_assert (bg_validate_index (id));
     bg.bg[id].enable = FALSE;
 }
 
 static void
-bg_reset (bg_index_t id)
+bg_reset (int id)
 {
+    g_assert (bg_validate_index (id));
     bg.bg[id].enable = FALSE;
     bg.bg[id].type = BG_TYPE_NONE;
     bg.bg[id].scroll_x = 0.0;
@@ -277,69 +266,19 @@ bg_reset (bg_index_t id)
 }
 
 static void
-bg_rotate (bg_index_t id, double angle)
+bg_show (int id)
 {
-    bg.bg[id].rotation += angle;
-}
-
-static void
-bg_scroll (bg_index_t id, double dx, double dy)
-{
-    bg.bg[id].scroll_x += dx;
-    bg.bg[id].scroll_y += dy;
-}
-
-static void
-bg_set (bg_index_t id, double rotation, double expansion,
-        double scroll_x, double scroll_y,
-        double rotation_center_x, double rotation_center_y)
-{
-    bg.bg[id].rotation = rotation;
-    bg.bg[id].expansion = expansion;
-    bg.bg[id].scroll_x = scroll_x;
-    bg.bg[id].scroll_y = scroll_y;
-    bg.bg[id].rotation_center_x = rotation_center_x;
-    bg.bg[id].rotation_center_y = rotation_center_y;
-}
-
-static void
-bg_set_expansion (bg_index_t id, double expansion)
-{
-    bg.bg[id].expansion = expansion;
-}
-
-static void
-bg_set_rotation (bg_index_t id, double rotation)
-{
-    bg.bg[id].rotation = rotation;
-}
-
-static void
-bg_set_rotation_center (bg_index_t id,
-                        double rotation_center_x, double rotation_center_y)
-{
-    bg.bg[id].rotation_center_x = rotation_center_x;
-    bg.bg[id].rotation_center_y = rotation_center_y;
-}
-
-static void
-bg_set_rotation_expansion (bg_index_t id, double rotation, double expansion)
-{
-    bg.bg[id].rotation = rotation;
-    bg.bg[id].expansion = expansion;
-}
-
-static void
-bg_show (bg_index_t id)
-{
+    g_assert (bg_validate_index (id));
     g_assert (bg.bg[id].type != BG_TYPE_NONE);
 
     bg.bg[id].enable = TRUE;
 }
 
 static cairo_surface_t *
-bg_render_to_cairo_surface (bg_index_t id)
+bg_render_to_cairo_surface (int id)
 {
+    g_assert (bg_validate_index (id));
+    
     switch (bg.bg[id].type)
     {
     case BG_TYPE_NONE:
@@ -353,13 +292,15 @@ bg_render_to_cairo_surface (bg_index_t id)
 }
 
 static cairo_surface_t *
-bg_render_bmp_to_cairo_surface (bg_index_t id)
+bg_render_bmp_to_cairo_surface (int id)
 {
     int width, height, stride;
     uint32_t *data;
     uint32_t c32;
     cairo_surface_t *surf;
 
+    g_assert (bg_validate_index (id));
+    
     width = bg.bg[id].vram_width;
     height = bg.bg[id].vram_height;
 
@@ -389,10 +330,12 @@ bg_render_bmp_to_cairo_surface (bg_index_t id)
 }
 
 void
-canvas_bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
+canvas_bg_get_transform (int id, double *scroll_x, double *scroll_y,
                          double *rotation_center_x, double *rotation_center_y,
                          double *rotation, double *expansion)
 {
+    g_assert (bg_validate_index (id));
+    
     *scroll_x = bg.bg[id].scroll_x;
     *scroll_y = bg.bg[id].scroll_y;
     *rotation_center_x = bg.bg[id].rotation_center_x;
@@ -403,239 +346,147 @@ canvas_bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
 
 ////////////////////////////////////////////////////////////////
 
-static SCM
-_scm_from_bg_index_t (bg_index_t x)
+SCM_VARIABLE_INIT (G_BG_TYPE_BMP, "BG_TYPE_BMP", scm_from_int (BG_TYPE_BMP));
+
+SCM_VARIABLE_INIT (G_BG_1, "BG_1", scm_from_int (BG_1));
+SCM_VARIABLE_INIT (G_BG_2, "BG_2", scm_from_int (BG_2));
+SCM_VARIABLE_INIT (G_BG_3, "BG_3", scm_from_int (BG_3));
+SCM_VARIABLE_INIT (G_BG_4, "BG_4", scm_from_int (BG_4));
+
+SCM_DEFINE (G_set_background_image, "bg-setup", 2, 4, 0,
+            (SCM s_id, SCM s_vram, SCM s_i, SCM s_j, SCM s_width, SCM s_height), "")
 {
-    return scm_from_int ((int) x);
-}
+    SCM_ASSERT (scm_is_signed_integer (s_id, BG_1, BG_4),s_id, SCM_ARG1,
+                "bg-setup");
+    SCM_ASSERT (scm_is_signed_integer (s_vram, VRAM_A, VRAM_J), s_vram, SCM_ARG2,
+                "bg-setup");
 
-static bg_index_t
-_scm_to_bg_index_t (SCM x)
-{
-    return (bg_index_t) scm_to_int (x);
-}
-
-static gboolean
-_scm_is_bg_index_t (SCM x)
-{
-    return scm_is_integer(x) && bg_validate_int_as_bg_index_t (scm_to_int (x));
-}
-
-#if 0
-SCM_DEFINE (G_bg_assign_memory, "bg-assign-memory", 3, 0, 0, (SCM id, SCM matrix_size, SCM vram_bank), "\
-Assign a memory location and a VRAM bank to a BG layer.")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-assign-memory");
-    SCM_ASSERT(_scm_is_matrix_size_t(matrix_size), matrix_size, SCM_ARG2, "bg-assign-memory");
-    SCM_ASSERT(_scm_is_vram_bank_t(vram_bank), vram_bank, SCM_ARG3, "bg-assign-memory");
-
-    // FIXME: throw errors is VRAM bank is used or if matrix and vram sizes
-    // don't make sense.
-    matrix_size_t c_matrix_size = _scm_to_matrix_size_t (matrix_size);
-    vram_bank_t c_vram_bank = _scm_to_vram_bank_t (vram_bank);
-
-    if (matrix_get_u32_size(c_matrix_size) > vram_get_u32_size(c_vram_bank))
-        guile_vram_error ("bg-assign-memory", c_vram_bank);
-
-    bg_assign_memory(_scm_to_bg_index_t(id), c_matrix_size, c_vram_bank);
-
-    return SCM_UNSPECIFIED;
-}
-#endif
-#if 0
-SCM_DEFINE (G_bg_dump, "bg-dump", 1, 0, 0, (SCM sid), "\
-Print to the console information about a background.")
-{
-    bg_index_t id = _scm_to_bg_index_t (sid);
-    char str[80];
-    sprintf(str, "BG %s %dx%d %s %s %s  priority %d",
-            bg_get_index_name(id),
-            matrix_get_width(bg.bg[id].size),
-            matrix_get_height(bg.bg[id].size),
-            bg.bg[id].type == BG_TYPE_MAP ? "MAP" :
-            (bg.bg[id].type == BG_TYPE_BMP ? "BMP" : "NONE"),
-            (bg.bg[id].enable ? "SHOWN" : "HIDDEN"),
-            vram_get_bank_name(bg.bg[id].bank),
-            bg.bg[id].priority);
-    console_write_latin1_string(str);
-    console_move_down(1);
-    console_move_to_column(0);
-    sprintf(str,"X %4.1f, Y %4.1f, ROTX %4.1f, ROTY %4.1f",
-            bg.bg[id].scroll_x, bg.bg[id].scroll_y,
-            bg.bg[id].rotation_center_x, bg.bg[id].rotation_center_y);
-    console_write_latin1_string(str);
-    console_move_down(1);
-    console_move_to_column(0);
-    sprintf(str,"expansion %4.1f, rotation %4.1f",
-            bg.bg[id].expansion, bg.bg[id].rotation);
-    console_write_latin1_string(str);
-    console_move_down(1);
-    console_move_to_column(0);
-
-    return SCM_UNSPECIFIED;
-
-    // enable, type, priority, scroll_x, scroll_y
-    // rotation_center_x, rotatioN_center_y
-    // expansion, rotation
-    // matrix_size, vram_bank
-    // name of last resource assignment
-}
-#endif
-
-#if 0
-SCM_DEFINE (G_bg_get_memory_assignment, "bg-dump-memory-assignment", 0, 0, 0, (void), "\
-Returns the matrix size and VRAM bank of the BG layer.")
-{
-    for (bg_index_t i = BG_0; i <= BG_3; i++)
+    int id = scm_to_int (s_id);
+    int vram = scm_to_int (s_vram);
+    if (vram_get_type (vram == VRAM_TYPE_IMAGE))
     {
-        char *c_str = g_strdup_printf("%s %dx%d %s",
-                                      bg_get_index_name(i),
-                                      matrix_get_width(bg.bg[i].size),
-                                      matrix_get_height(bg.bg[i].size),
-                                      vram_get_bank_name(bg.bg[i].bank));
-        console_write_latin1_string(c_str);
-        console_move_down(1);
-        console_move_to_column(0);
+        bg.bg[id].enable = TRUE;
+        bg.bg[id].type = BG_TYPE_BMP;
+        bg.bg[id].scroll_x = 0;
+        bg.bg[id].scroll_y = 0;
+        bg.bg[id].rotation_center_x = 0;
+        bg.bg[id].rotation_center_y = 0;
+        bg.bg[id].expansion = 1.0;
+        bg.bg[id].rotation = 0.0;
+        bg.bg[id].img_vram = vram;
+        if (SCM_UNBNDP (s_i))
+            bg.bg[id].vram_i = 0;
+        else
+            bg.bg[id].vram_i = scm_to_int (s_i);
+        if (SCM_UNBNDP (s_j))
+            bg.bg[id].vram_j = 0;
+        else
+            bg.bg[id].vram_j = scm_to_int (s_j);
+        if (SCM_UNBNDP (s_width))
+            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, vram_get_width(vram));
+        else
+            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, scm_to_int (s_width));
+        if (SCM_UNBNDP (s_height))
+            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, vram_get_height(vram));
+        else
+            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, scm_to_int (s_height));
     }
+    bg.surf[id] = bg_render_to_cairo_surface(id);
+    bg.bg[id].dirty = TRUE;
     return SCM_UNSPECIFIED;
 }
-#endif
+
+SCM_DEFINE (G_bg_get_setup, "bg-get-setup", 1, 0, 0, (SCM id), "")
+{
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1,
+                "bg-get-setup");
+    int i = scm_to_int (id);
+    return scm_list_5 (scm_from_int (bg.bg[i].img_vram),
+                       scm_from_int (bg.bg[i].vram_i),
+                       scm_from_int (bg.bg[i].vram_j),
+                       scm_from_int (bg.bg[i].vram_width),
+                       scm_from_int (bg.bg[i].vram_height));
+}
+
+SCM_DEFINE (G_bg_set_position, "bg-set-position", 3, 4, 0,
+            (SCM id, SCM scroll_x, SCM scroll_y, SCM rotation, SCM expansion,
+             SCM center_x, SCM center_y), "")
+{
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1,
+                "bg-set-position");
+
+    int i = scm_to_int (id);
+    bg.bg[i].scroll_x = scm_to_double (scroll_x);
+    bg.bg[i].scroll_y = scm_to_double (scroll_y);
+    if (!SCM_UNBNDP(center_x))
+        bg.bg[i].rotation_center_x = scm_to_double (center_x);
+    if (!SCM_UNBNDP(center_y))
+        bg.bg[i].rotation_center_y = scm_to_double (center_y);
+    if (!SCM_UNBNDP(expansion))
+        bg.bg[i].expansion = scm_to_double (expansion);
+    if (!SCM_UNBNDP(rotation))
+        bg.bg[i].rotation = scm_to_double (rotation);
+    return SCM_UNSPECIFIED;
+}
+
+SCM_DEFINE (G_bg_get_position, "bg-get-position", 1, 0, 0,
+            (SCM id), "")
+{
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1,
+                "bg-get-position");
+    int i = scm_to_int (id);
+    return scm_list_n (scm_from_double (bg.bg[i].scroll_x),
+                       scm_from_double (bg.bg[i].scroll_y),
+                       scm_from_double (bg.bg[i].rotation),
+                       scm_from_double (bg.bg[i].expansion),
+                       scm_from_double (bg.bg[i].rotation_center_x),
+                       scm_from_double (bg.bg[i].rotation_center_y),
+                       SCM_UNDEFINED);
+}
+
+SCM_DEFINE (G_reset_background, "bg-reset", 1, 0, 0,
+            (SCM id), "")
+{
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1, "bg-reset");
+    
+    int i = scm_to_int (id);
+    bg_reset(i);
+        
+    return SCM_UNSPECIFIED;    
+}
 
 SCM_DEFINE (G_bg_hide, "bg-hide", 1, 0, 0, (SCM id), "\
 Set background later ID to not be drawn")
 {
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-hide");
+    if (!scm_is_integer (id))
+        scm_wrong_type_arg_msg ("bg-hide", SCM_ARG1, id, "integer");
+    if (!scm_is_signed_integer (id, BG_1, BG_4))
+        scm_out_of_range ("bg-hide", id);
+
     bg_hide (scm_to_int (id));
     return SCM_UNSPECIFIED;
 }
 
-SCM_DEFINE (G_bg_rotate, "bg-rotate", 2, 0, 0, (SCM id, SCM angle), "\
-Rotate the background about its rotation center")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-rotate");
-    bg_rotate (scm_to_int (id), scm_to_double (angle));
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_bg_scroll, "bg-scroll", 3, 0, 0, (SCM id, SCM dx, SCM dy), "\
-Move the background")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-scroll");
-    bg_scroll (scm_to_int (id), scm_to_double (dx), scm_to_double (dy));
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_bg_set, "bg-set", 7, 0, 0,
-            (SCM id, SCM rotation, SCM expansion, SCM scroll_x, SCM scroll_y, SCM center_x, SCM center_y), "\
-Set the position, rotation, expansion, and rotation center of a background.")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-set");
-
-    bg_set (scm_to_int(id), scm_to_double(rotation), scm_to_double (expansion), scm_to_double (scroll_x),
-            scm_to_double (scroll_y), scm_to_double (center_x), scm_to_double (center_y));
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_bg_set_expansion, "bg-set-expansion", 2, 0, 0, (SCM id, SCM expansion), "\
-Set BG expansion")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-set-expansion");
-
-    bg_set_expansion (scm_to_int (id), scm_to_double (expansion));
-    return SCM_UNSPECIFIED;
-}
-
-
-SCM_DEFINE (G_bg_set_rotation, "bg-set-rotation", 2, 0, 0, (SCM id, SCM rotation), "\
-Set BG rotation")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-set-rotation");
-
-    bg_set_rotation (scm_to_int (id), scm_to_double (rotation));
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_bg_set_rotation_center, "bg-set-rotation-center", 3, 0, 0, (SCM id, SCM x, SCM y), "\
-Move the rotation center of the background")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-set-rotation-center");
-
-    bg_set_rotation_center (scm_to_int (id), scm_to_double (x), scm_to_double (y));
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_bg_set_rotation_expansion, "bg-set-rotation-expansion", 3, 0, 0, (SCM id, SCM r, SCM e), "\
-Set the rotation angle and expansion of a BG")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-set-rotation-expansion");
-
-    bg_set_rotation_expansion (scm_to_int (id), scm_to_double (r), scm_to_double (e));
-    return SCM_UNSPECIFIED;
-}
-
-#if 0
 SCM_DEFINE (G_bg_show, "bg-show", 1, 0, 0, (SCM id), "\
 Set background later ID to be drawn")
 {
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-show");
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1, "bg-show");
 
-    bg_index_t c_id = _scm_to_bg_index_t (id);
-    if (bg.bg[c_id].type == BG_TYPE_NONE)
-        guile_show_unassigned_bg_error ("bg-show", c_id);
-
-    bg_show (scm_to_int (id));
+    int i = scm_to_int (id);
+    if (bg.bg[i].type != BG_TYPE_NONE)
+        bg_show (i);
     return SCM_UNSPECIFIED;
 }
-#endif
 
 SCM_DEFINE (G_bg_shown_p, "bg-shown?", 1, 0, 0, (SCM id), "\
 Return #t if indicated background layer is visible.")
 {
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-shown?");
+    SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1,
+                "bg-show");
 
     return scm_from_bool (canvas_bg_is_shown (scm_to_int (id)));
 }
 
-#if 0
-SCM_DEFINE (G_bg_update, "bg-update", 1, 0, 0, (SCM id), "\
-Apply all changes to this background layer since the last call to 'bg-update'")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-update");
-    bg_update (scm_to_int (id));
-    return SCM_UNSPECIFIED;
-}
-#endif
-
-#if 0
-SCM_DEFINE (G_bg_modify, "bg-get-bytevector", 1, 0, 0, (SCM id), "\
-Returns a bytevector of data that holds the BG bitmap or map data")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-get-bytevector");
-
-    // First make a pointer
-    bg_index_t i = scm_to_int (id);
-    SCM pointer = scm_from_pointer (bg_get_data_ptr (i), NULL);
-
-    // Then make a bytevector
-    SCM len = scm_from_size_t (matrix_get_u32_size (bg.bg[i].size));
-    SCM zero_offset = scm_from_size_t (0);
-    SCM uvec_type = scm_from_locale_symbol("u32");
-
-    return scm_pointer_to_bytevector (pointer, len, zero_offset, uvec_type);
-}
-#endif
-
-#if 0
-SCM_DEFINE (G_bg_get_dimensions,"bg-get-dimensions", 1, 0, 0, (SCM id), "")
-{
-    SCM_ASSERT(_scm_is_bg_index_t(id), id, SCM_ARG1, "bg-get-dimensions");
-
-    matrix_size_t siz = bg.bg[scm_to_int(id)].size;
-    return scm_list_3 (scm_from_int (matrix_get_width (siz)),
-                       scm_from_int (matrix_get_height (siz)),
-                       scm_from_int (matrix_get_u32_size(siz)));
-}
-#endif
 
 SCM_DEFINE(G_bg_get_colorswap, "bg-get-colorswap", 0, 0, 0, (void), "\
 return the status of the colorswap flag for backgrounds.")
@@ -677,85 +528,6 @@ a value between 0.0 (black) and 1.0 (unmodified colors).")
 }
 
 
-SCM_VARIABLE_INIT (G_BG_TYPE_BMP, "BG_TYPE_BMP", scm_from_int (BG_TYPE_BMP));
-
-SCM_VARIABLE_INIT (G_BG_0, "BG_0", scm_from_int (BG_0));
-SCM_VARIABLE_INIT (G_BG_1, "BG_1", scm_from_int (BG_1));
-SCM_VARIABLE_INIT (G_BG_2, "BG_2", scm_from_int (BG_2));
-SCM_VARIABLE_INIT (G_BG_3, "BG_3", scm_from_int (BG_3));
-
-SCM_DEFINE (G_set_background_image, "bg-setup", 2, 4, 0,
-            (SCM s_id, SCM s_vram, SCM s_i, SCM s_j, SCM s_width, SCM s_height), "")
-{
-    SCM_ASSERT (scm_is_signed_integer (s_id, BG_0, BG_3), s_id, SCM_ARG1, "set-background-image");
-    SCM_ASSERT (scm_is_signed_integer (s_vram, VRAM_A, VRAM_J), s_vram, SCM_ARG2, "set-background-image");
-
-    int id = scm_to_int (s_id);
-    int vram = scm_to_int (s_vram);
-    if (vram_get_type (vram == VRAM_TYPE_IMAGE))
-    {
-        bg.bg[id].enable = TRUE;
-        bg.bg[id].type = BG_TYPE_BMP;
-        bg.bg[id].scroll_x = 0;
-        bg.bg[id].scroll_y = 0;
-        bg.bg[id].rotation_center_x = 0;
-        bg.bg[id].rotation_center_y = 0;
-        bg.bg[id].expansion = 1.0;
-        bg.bg[id].rotation = 0.0;
-        bg.bg[id].img_vram = vram;
-        if (SCM_UNBNDP (s_i))
-            bg.bg[id].vram_i = 0;
-        else
-            bg.bg[id].vram_i = scm_to_int (s_i);
-        if (SCM_UNBNDP (s_j))
-            bg.bg[id].vram_j = 0;
-        else
-            bg.bg[id].vram_j = scm_to_int (s_j);
-        if (SCM_UNBNDP (s_width))
-            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, vram_get_width(vram));
-        else
-            bg.bg[id].vram_width = MIN(CANVAS_WIDTH, scm_to_int (s_width));
-        if (SCM_UNBNDP (s_height))
-            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, vram_get_height(vram));
-        else
-            bg.bg[id].vram_height = MIN(CANVAS_HEIGHT, scm_to_int (s_height));
-    }
-    bg.surf[id] = bg_render_to_cairo_surface(id);
-    bg.bg[id].dirty = TRUE;
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_move_background, "bg-move", 3, 4, 0,
-            (SCM id, SCM scroll_x, SCM scroll_y, SCM rotation, SCM expansion,
-             SCM center_x, SCM center_y), "")
-{
-    SCM_ASSERT (scm_is_signed_integer (id, BG_0, BG_3), id, SCM_ARG1, "set-background-image");
-
-    int i = scm_to_int (id);
-    bg.bg[i].scroll_x = scm_to_double (scroll_x);
-    bg.bg[i].scroll_y = scm_to_double (scroll_y);
-    if (!SCM_UNBNDP(center_x))
-        bg.bg[i].rotation_center_x = scm_to_double (center_x);
-    if (!SCM_UNBNDP(center_y))
-        bg.bg[i].rotation_center_y = scm_to_double (center_y);
-    if (!SCM_UNBNDP(expansion))
-        bg.bg[i].expansion = scm_to_double (expansion);
-    if (!SCM_UNBNDP(rotation))
-        bg.bg[i].rotation = scm_to_double (rotation);
-    return SCM_UNSPECIFIED;
-}
-
-SCM_DEFINE (G_reset_background, "bg-reset", 1, 0, 0,
-            (SCM id), "")
-{
-    SCM_ASSERT (scm_is_signed_integer (id, BG_0, BG_3), id, SCM_ARG1, "set-background-image");
-    
-    int i = scm_to_int (id);
-    bg_reset(i);
-        
-    return SCM_UNSPECIFIED;    
-}
-
 void
 canvas_bg_init_guile_procedures (void)
 {
@@ -763,7 +535,9 @@ canvas_bg_init_guile_procedures (void)
 #include "canvas_bg.x"
 #endif
     scm_c_export ("bg-setup",
-                  "bg-move",
+                  "bg-get-setup",
+                  "bg-set-position",
+                  "bg-get-position",
                   "bg-reset",
                   "bg-set-colorswap",
                   "bg-get-colorswap",
@@ -771,47 +545,14 @@ canvas_bg_init_guile_procedures (void)
                   "bg-get-brightness",
                   "bg-hide",
                   "bg-show",
-                  "bg-rotate",
-                  "bg-scroll",
-                  "bg-set-expansion",
-                  "bg-set-rotation",
-                  "bg-set-rotation-center",
-                  "bg-set-rotation-expansion",
+                  "bg-shown?",
                   
-                  "BG_0",
                   "BG_1",
                   "BG_2",
                   "BG_3",
+                  "BG_4",
                   NULL
         );
-                  
-
-#if 0
-
-        "bg-assign-memory",
-                  "bg-dump-memory-assignment",
-                  "bg-dump",
-
-                  "bg-reset",
-
-
-                  "bg-set",
-
-
-
-                  "bg-update",
-
-                  "bg-get-width",
-                  "bg-get-height",
-                  "bg-get-u32-size",
-                  "bg-get-bytevector",
-                  // "bg->list-of-bytevectors",
-
-
-                  "BG_TYPE_BMP",
-                  "BG_TYPE_MAP",
-                  NULL
-#endif
 }
 
 /*

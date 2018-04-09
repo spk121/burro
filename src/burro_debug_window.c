@@ -9,6 +9,8 @@
 #include <gtk/gtk.h>
 #include <libguile.h>
 
+#define __maybe_unused __attribute__((unused))
+
 // Signals
 enum {
     STOP_REQUEST,
@@ -62,23 +64,6 @@ struct _BurroDebugWindow
 extern char *
 burro_app_window_eval_string_in_sandbox (const char *txt);
 
-
-static void
-console_write_icon (const gchar *c_icon_name);
-
-static GtkListStore *debug_peek_list_store_new()
-{
-    GtkListStore *list_store;
-
-    list_store = gtk_list_store_new (DEBUG_N_COLUMNS,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING,
-                                     G_TYPE_STRING);
-    return list_store;
-}
-
-
 #if 0
 static GActionEntry win_entries[] =
 {
@@ -125,7 +110,8 @@ signal_debug_pause (GtkToggleButton *button, gpointer user_data)
 }
 
 static void
-signal_debug_next (GtkButton *button, gpointer user_data)
+signal_debug_next (GtkButton *button __maybe_unused,
+                   gpointer user_data)
 {
     BurroDebugWindow *win = BURRO_DEBUG_WINDOW(user_data);
     gboolean active = gtk_toggle_button_get_active (win->pause_button);
@@ -161,7 +147,21 @@ guile_any_to_c_string (SCM x)
     }
 }
 
-static gboolean key_event_terminal (GtkWidget *widget, GdkEventKey *event, gpointer dummy)
+static GtkListStore *debug_peek_list_store_new()
+{
+    GtkListStore *list_store;
+
+    list_store = gtk_list_store_new (DEBUG_N_COLUMNS,
+                                     G_TYPE_STRING,
+                                     G_TYPE_STRING,
+                                     G_TYPE_STRING,
+                                     G_TYPE_STRING);
+    return list_store;
+}               
+
+static gboolean key_event_terminal (GtkWidget *widget __maybe_unused,
+                                    GdkEventKey *event,
+                                    gpointer dummy __maybe_unused)
 {
     unsigned keysym = event->keyval;
     unsigned state = event->state;
@@ -273,7 +273,9 @@ static gboolean key_event_terminal (GtkWidget *widget, GdkEventKey *event, gpoin
 }
 
 gboolean
-draw_event_terminal (GtkWidget *widget, cairo_t *cr, gpointer data)
+draw_event_terminal (GtkWidget *widget __maybe_unused,
+                     cairo_t *cr,
+                     gpointer data __maybe_unused)
 {
     cairo_surface_t *surf;
 
@@ -299,10 +301,6 @@ force_terminal_draw (gpointer user_data)
 static void
 burro_debug_window_init (BurroDebugWindow *win)
 {
-    GtkBuilder *builder;
-    GMenuModel *menu;
-    GAction *action;
-
     gtk_widget_init_template (GTK_WIDGET (win));
 
     // Set up the terminal
@@ -438,14 +436,11 @@ burro_debug_window_init (BurroDebugWindow *win)
 
 }
 
-// This callback is called when the application has asked this window
-// to delete itself.
-static  gboolean
-burro_debug_window_delete (GtkWidget         *widget,
-                         GdkEventAny         *event)
+static gboolean
+burro_debug_hide_on_delete (GtkWidget *widget,
+                            GdkEventAny *event __maybe_unused)
 {
-    gtk_widget_destroy(widget);
-    return TRUE;
+    return gtk_widget_hide_on_delete (widget);
 }
 
 static void
@@ -468,10 +463,7 @@ burro_debug_window_class_init (BurroDebugWindowClass *class)
     widget_class = GTK_WIDGET_CLASS (class);
     gobject_class->dispose = burro_debug_window_dispose;
 
-    widget_class->delete_event = gtk_widget_hide_on_delete;
-#if 0
-    widget_class->window_state_event = burro_debug_window_state;
-#endif
+    widget_class->delete_event = burro_debug_hide_on_delete;
 
     signals[STOP_REQUEST] =
         g_signal_new ("stop-requested",
@@ -522,10 +514,9 @@ burro_debug_window_class_init (BurroDebugWindowClass *class)
 }
 
 BurroDebugWindow *
-burro_debug_window_new (BurroAppWindow *parent)
+burro_debug_window_new (BurroAppWindow *parent __maybe_unused)
 {
-    debug_window_cur = g_object_new (BURRO_DEBUG_WINDOW_TYPE,
-                     NULL);
+    debug_window_cur = g_object_new (BURRO_DEBUG_WINDOW_TYPE,  NULL);
     return debug_window_cur;
 }
 

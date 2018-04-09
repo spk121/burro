@@ -10,15 +10,6 @@ is_valid_cairo_format_t (cairo_format_t f)
             || f == CAIRO_FORMAT_RGB16_565);
 }
 
-static gboolean
-is_valid_cairo_antialias_t (cairo_antialias_t a)
-{
-    return (a == CAIRO_ANTIALIAS_DEFAULT
-            || a == CAIRO_ANTIALIAS_NONE
-            || a == CAIRO_ANTIALIAS_GRAY
-            || a == CAIRO_ANTIALIAS_SUBPIXEL);
-}
-
 cairo_surface_t *
 xcairo_image_surface_create (cairo_format_t format, int width, int height)
 {

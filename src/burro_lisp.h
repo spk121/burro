@@ -26,6 +26,7 @@
 
 #include <gtk/gtk.h>
 #include <libguile.h>
+#include "burro_debug_window.h"
 
 SCM burro_lisp_new ();
 

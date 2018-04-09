@@ -12,5 +12,6 @@ BurroDebugWindow *burro_debug_window_new (BurroAppWindow *parent);
 void              burro_debug_window_update_rate_label (BurroDebugWindow *win, const char *str);
 void              burro_debug_window_update_cycle_label (BurroDebugWindow *win, const char *str);
 void              burro_debug_window_log_string (BurroDebugWindow *win, GLogLevelFlags log_level, const char *str);
+void burro_debug_window_init_guile_procedures ();
 
 #endif

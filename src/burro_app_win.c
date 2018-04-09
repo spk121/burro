@@ -13,7 +13,7 @@
 #define GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS (1000000 / 60)
 #define GAME_LOOP_IDEAL_PERIOD_MICROSECONDS (1000000 / 30)
 #define GAME_LOOP_MAXIMUM_PERIOD_MICROSECONDS (1000000 / 10)
-
+#define __maybe_unused __attribute__((unused))
 struct _BurroAppWindow
 {
     GtkApplicationWindow parent;
@@ -95,8 +95,8 @@ debug_peek_list_store_update(GtkListStore *list_store)
 #endif
 
 static void
-action_open (GSimpleAction *simple,
-             GVariant      *parameter,
+action_open (GSimpleAction *simple __maybe_unused,
+             GVariant      *parameter __maybe_unused,
              gpointer       user_data)
 {
     GtkWindow *parent_window = GTK_WINDOW(user_data);
@@ -134,8 +134,8 @@ action_open (GSimpleAction *simple,
 }
 
 static void
-action_view_tools (GSimpleAction *simple,
-                   GVariant      *parameter,
+action_view_tools (GSimpleAction *simple __maybe_unused,
+                   GVariant      *parameter __maybe_unused,
                    gpointer       user_data)
 {
     BurroAppWindow *window;
@@ -174,15 +174,15 @@ action_view_tools (GSimpleAction *simple,
 static GActionEntry win_entries[] =
 {
     /* Stateless actions. */
-    {"open",  action_open,  NULL, NULL, NULL},
-    {"view-tools", action_view_tools, NULL, NULL, NULL},
+    {"open",  action_open,  NULL, NULL, NULL, {0,0,0}},
+    {"view-tools", action_view_tools, NULL, NULL, NULL, {0,0,0}},
 };
 
 static gboolean
-accel_action_view_tools (GtkAccelGroup *accel_group,
+accel_action_view_tools (GtkAccelGroup *accel_group __maybe_unused,
                          GObject *acceleratable,
-                         guint keyval,
-                         GdkModifierType modifier)
+                         guint keyval __maybe_unused,
+                         GdkModifierType modifier __maybe_unused)
 {
     BurroAppWindow *window;
     gboolean visible;
@@ -207,9 +207,9 @@ G_DEFINE_TYPE(BurroAppWindow, burro_app_window, GTK_TYPE_APPLICATION_WINDOW);
 static BurroAppWindow *app_window_cur;
 
 static gboolean
-signal_action_canvas_button_press_event (GtkWidget *widget,
+signal_action_canvas_button_press_event (GtkWidget *widget __maybe_unused,
                                          GdkEventButton *event,
-                                         gpointer user_data)
+                                         gpointer user_data __maybe_unused)
 {
     GdkEventButton *button = event;
 
@@ -234,9 +234,9 @@ signal_action_canvas_button_press_event (GtkWidget *widget,
 }
 
 static gboolean
-signal_action_canvas_motion_notify_event (GtkWidget *widget,
+signal_action_canvas_motion_notify_event (GtkWidget *widget __maybe_unused,
                                           GdkEventMotion *event,
-                                          gpointer user_data)
+                                          gpointer user_data __maybe_unused)
 {
     int index, trailing;
 
@@ -262,7 +262,8 @@ signal_action_canvas_motion_notify_event (GtkWidget *widget,
 }
 
 static void
-signal_start_requested (GObject *obj, gpointer user_data)
+signal_start_requested (GObject *obj __maybe_unused,
+                        gpointer user_data)
 {
     BurroAppWindow *win = user_data;
     win->game_loop_active_flag = TRUE;
@@ -270,7 +271,8 @@ signal_start_requested (GObject *obj, gpointer user_data)
 }
 
 static void
-signal_stop_requested (GObject *obj, gpointer user_data)
+signal_stop_requested (GObject *obj __maybe_unused,
+                       gpointer user_data)
 {
     BurroAppWindow *win = user_data;
     win->game_loop_active_flag = FALSE;
@@ -278,7 +280,8 @@ signal_stop_requested (GObject *obj, gpointer user_data)
 }
 
 static void
-signal_step_requested (GObject *obj, gpointer user_data)
+signal_step_requested (GObject *obj __maybe_unused,
+                       gpointer user_data)
 {
     BurroAppWindow *win = user_data;
     win->game_loop_active_flag = FALSE;
@@ -286,7 +289,8 @@ signal_step_requested (GObject *obj, gpointer user_data)
 }
 
 static void
-signal_repl_requested (GObject *obj, gpointer user_data)
+signal_repl_requested (GObject *obj __maybe_unused,
+                       gpointer user_data)
 {
     BurroAppWindow *win = user_data;
     burro_repl_enable (win->repl);
@@ -461,7 +465,7 @@ game_loop (gpointer user_data)
 }
 
 static void
-timeout_action_destroy (gpointer data)
+timeout_action_destroy (gpointer data __maybe_unused)
 {
 
 }
@@ -472,7 +476,6 @@ burro_app_window_init (BurroAppWindow *win)
 {
     GtkBuilder *builder;
     GMenuModel *menu;
-    GAction *action;
 
     // We temporarily construct a canvas so that the canvas class is
     // ready to go before calling builder.
@@ -508,9 +511,6 @@ burro_app_window_init (BurroAppWindow *win)
     gtk_application_window_set_show_menubar (GTK_APPLICATION_WINDOW (win), TRUE);
 
     // Set the visibility of the text box
-    GAction *vdebug =
-        g_action_map_lookup_action (G_ACTION_MAP (win), "view-debug");
-
     win->burro_module = burro_lisp_new ();
     win->sandbox = SCM_BOOL_F;
     win->repl = burro_repl_new();
@@ -563,8 +563,7 @@ burro_app_window_init (BurroAppWindow *win)
 // minimizing.
 gboolean
 burro_app_window_state (GtkWidget *widget,
-                        GdkEventWindowState *win_event,
-                        gpointer user_data)
+                        GdkEventWindowState *win_event)
 {
     BurroAppWindow *win = BURRO_APP_WINDOW(widget);
 
@@ -591,7 +590,7 @@ burro_app_window_state (GtkWidget *widget,
 // to delete itself.
 static  gboolean
 burro_app_window_delete (GtkWidget       *widget,
-                         GdkEventAny         *event)
+                         GdkEventAny         *event __maybe_unused)
 {
     gtk_widget_destroy(widget);
     return TRUE;

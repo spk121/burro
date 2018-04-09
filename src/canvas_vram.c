@@ -413,9 +413,9 @@ set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
                     
         uint32_t *c32 = xgdk_pixbuf_get_argb32_pixels(pb);
         uint32_t *data = vram_get_u32_ptr (vram_index);
-        for (size_t j = 0; j < img_height; j ++)
+        for (int j = 0; j < img_height; j ++)
         {
-            for (size_t i = 0; i < img_width; i ++)
+            for (int i = 0; i < img_width; i ++)
             {
                 // Convert from GDKPixbuf ABGR to Cairo ARGB
                 uint32_t val = c32[j * img_stride + i];
@@ -468,7 +468,7 @@ size_t
 vram_audio_read (void *ptr, size_t size, size_t nmemb, void *context)
 {
     vram_io_context_t *io = (vram_io_context_t *) context;
-    size_t start, end;
+    long start, end;
 
     if (ptr == NULL || size == 0 || nmemb == 0)
         return 0;
@@ -493,14 +493,13 @@ int
 vram_audio_seek (void *context, ogg_int64_t offset, int whence)
 {
     vram_io_context_t *io = (vram_io_context_t *) context;
-    gint64 start, end;
+    gint64 start = 0;
+    gint64 end;
 
     if (!io || !io->open)
         return -1;
 
-    if (whence == SEEK_SET)
-        start = 0;
-    else if (whence == SEEK_CUR)
+    if (whence == SEEK_CUR)
         start = io->position;
     else if (whence == SEEK_END)
         start = io->size;

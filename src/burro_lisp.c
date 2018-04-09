@@ -28,11 +28,14 @@
    new sandbox.
 */
 
+#define __maybe_unused __attribute__((unused))
+
 static void add_site_dir_to_load_path();
 static SCM add_to_load_path (void *path);
 static void create_burro_engine_module();
 static SCM scm_init_burro_engine_module (void *data);
 static void init_burro_engine (void *unused);
+
 
 SCM burro_lisp_new ()
 {
@@ -124,7 +127,7 @@ scm_init_burro_engine_module (void *data)
 }
 
 static void
-init_burro_engine (void *unused)
+init_burro_engine (void *unused __maybe_unused)
 {
     // Load up the C-defined procedures
     burro_app_win_init_guile_procedures();
@@ -134,7 +137,8 @@ init_burro_engine (void *unused)
 }
 
 SCM
-default_error_handler (void *data, SCM key, SCM vals)
+default_error_handler (void *data __maybe_unused,
+                       SCM key, SCM vals)
 {
     /* if (data == NULL) */
     /*     return SCM_BOOL_F; */
@@ -194,13 +198,13 @@ default_error_handler (void *data, SCM key, SCM vals)
 }
 
 static SCM
-public_ref_burro_make_sandbox (void *unused)
+public_ref_burro_make_sandbox (void *unused __maybe_unused)
 {
     return scm_c_public_ref("burro", "make-sandbox");
 }
 
 static SCM
-public_ref_burro_load_file_into_sandbox (void *unused)
+public_ref_burro_load_file_into_sandbox (void *unused __maybe_unused)
 {
     return scm_c_public_ref("burro", "load-file-into-sandbox");
 }
@@ -214,7 +218,7 @@ make_sandbox_with_path (void *c_path)
 }
 
 static SCM
-make_sandbox (void *unused)
+make_sandbox (void *unused __maybe_unused)
 {
     SCM sandbox_func = public_ref_burro_make_sandbox (NULL);
     return scm_call_0(sandbox_func);

@@ -6,6 +6,8 @@
 
 #include <gtk/gtk.h>
 
+#define __maybe_unused __attribute__((unused))
+
 struct _BurroApp
 {
     GtkApplication parent;
@@ -14,7 +16,9 @@ struct _BurroApp
 G_DEFINE_TYPE(BurroApp, burro_app, GTK_TYPE_APPLICATION);
 
 static void
-action_about (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+action_about (GSimpleAction *action __maybe_unused,
+              GVariant *parameter __maybe_unused,
+              gpointer user_data)
 {
     BurroApp *app;
     GtkWindow *window;
@@ -41,7 +45,9 @@ action_about (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 }
 
 static void
-action_quit (GSimpleAction *action, GVariant *parameter, gpointer app)
+action_quit (GSimpleAction *action __maybe_unused,
+             GVariant *parameter __maybe_unused,
+             gpointer app)
 {
     GList *windows;
 
@@ -52,8 +58,8 @@ action_quit (GSimpleAction *action, GVariant *parameter, gpointer app)
 
 static GActionEntry app_entries[] =
 {
-    {"about", action_about, NULL, NULL, NULL},
-    {"quit", action_quit, NULL, NULL, NULL},
+    {"about", action_about, NULL, NULL, NULL, {0, 0, 0}},
+    {"quit", action_quit, NULL, NULL, NULL, {0, 0, 0}},
 };
 
 
@@ -98,7 +104,7 @@ static void
 burro_app_open (GApplication *app,
                 GFile **files,
                 gint n_files,
-                const gchar *hint)
+                const gchar *hint __maybe_unused)
 {
     BurroAppWindow *win;
 
@@ -115,7 +121,7 @@ burro_app_open (GApplication *app,
 }
 
 static void
-burro_app_init (BurroApp *app)
+burro_app_init (BurroApp *app __maybe_unused)
 {
 }
 

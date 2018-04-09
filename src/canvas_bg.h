@@ -45,11 +45,11 @@ typedef enum {
 } bg_type_t;
 
 DLL_LOCAL void canvas_bg_init (void);
-DLL_LOCAL cairo_surface_t *canvas_bg_get_cairo_surface (bg_index_t id);
-DLL_LOCAL gboolean canvas_bg_is_shown (bg_index_t id);
-DLL_LOCAL gboolean canvas_bg_is_dirty (bg_index_t id);
-DLL_PUBLIC void canvas_bg_set_clean (bg_index_t z);
-DLL_LOCAL void canvas_bg_get_transform (bg_index_t id, double *scroll_x, double *scroll_y,
+DLL_LOCAL cairo_surface_t *canvas_bg_get_cairo_surface (int id);
+DLL_LOCAL gboolean canvas_bg_is_shown (int id);
+DLL_LOCAL gboolean canvas_bg_is_dirty (int id);
+DLL_PUBLIC void canvas_bg_set_clean (int z);
+DLL_LOCAL void canvas_bg_get_transform (int id, double *scroll_x, double *scroll_y,
                        double *rotation_center_x, double *rotation_center_y,
                        double *rotation, double *expansion);
 DLL_LOCAL void canvas_bg_init_guile_procedures (void);
