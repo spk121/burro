@@ -20,29 +20,21 @@ AC_CONFIG_HEADERS([config.h])
 
 # Checks for libraries
 PKG_PROG_PKG_CONFIG
-PKG_CHECK_MODULES([DEPS],[gtk+-3.0
-                          gio-2.0
-                          glib-2.0
-                          libpulse
-                          libpulse-mainloop-glib])
+PKG_CHECK_MODULES([GTK3],[gtk+-3.0 gio-2.0 glib-2.0])
 PKG_CHECK_MODULES([VORBISFILE],[vorbisfile])
 
-AC_ARG_WITH([zegu],
-	    [AS_HELP_STRING([--with-zegu], 
-   	                    [experimental support the Zegu scripting engine])],
-	    [with_libzegu=yes],
-	    [with_libzegu=no])
-	     
-LIBZEGU=
-AS_IF([test "x$with_libzegu" = xyes],
-      [AC_CHECK_LIB([zegu],
-                    [zegu_init],
-                    [AC_SUBST([LIBZEGU], ["-lzegu"])
-		     AC_DEFINE([HAVE_LIBZEGU], [1],
-		               [Define if you have libzegu])],
-		    [AC_MSG_FAILURE([--with-libzegu was given, but, test for libzegu failed])],
-		    [-lzegu])])
-
+AC_ARG_WITH([libpulse],
+            [AS_HELP_STRING([--with-libpulse],
+                            [enable support for pulseaudio])],
+            [with_libpulse=yes],
+            [with_libpulse=no])
+          
+LIBPULSE=
+AS_IF([test "x$with_pulseaudio" = xyes],
+      [PKG_CHECK_MODULES([LIBPULSE], [libpulse],
+                         [AC_DEFINE([HAVE_LIBPULSE], [1],
+                                    [Define if you have Pulseaudio's libpulse])],
+                         [AC_MSG_FAILURE([--with-libpulse was given, but test for Pulseaudio failed])])])
 ################################################################
 # Guile support details
 GUILE_PKG([2.2])

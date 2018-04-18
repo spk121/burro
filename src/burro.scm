@@ -87,10 +87,18 @@
      audio-unpause
      audio-set-volume
      audio-get-volume
-     BG_0 BG_1 BG_2 BG_3
+     BG_1 BG_2 BG_3 BG_4
      bg-setup
-     bg-move
+     bg-get-setup
+     bg-set-position
+     bg-get-position
      bg-reset
+     bg-hide
+     bg-show
+     bg-shown?
+     bg-get-colorswap
+     bg-set-colorswap
+     bg-set-brightness
      bg-set-brightness
      )))
 

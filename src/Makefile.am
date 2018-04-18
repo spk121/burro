@@ -61,13 +61,13 @@ r/burro.resource.h: r/burro.resource.xml
 burro_paths.h: Makefile
 	$(AM_V_GEN)rm -f $@-t && \
 	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */'; \
-	  echo '#define PREFIX "$(prefix)"'; \
+	  echo '#define PREFIX "'`$(CYGPATH_W) $(prefix)`'"'; \
 	  echo '#define EXEC_PREFIX "$(exec_prefix)"'; \
 	  echo '#define BINDIR "$(bindir)"'; \
 	  echo '#define SBINDIR "$(sbindir)"'; \
 	  echo '#define LIBEXECDIR "$(libexecdir)"'; \
 	  echo '#define DATAROOTDIR "$(datarootdir)"'; \
-	  echo '#define DATADIR "$(datadir)"'; \
+	  echo '#define DDDATADIR "'`$(CYGPATH_W) $(datadir)`'"'; \
 	  echo '#define SYSCONFDIR "$(sysconfdir)"'; \
 	  echo '#define SHAREDSTATEDIR "$(sharedstatedir)"'; \
 	  echo '#define LOCALSTATEDIR "$(localstatedir)"'; \
@@ -100,9 +100,9 @@ burro_engine_CFLAGS = \
   -fvisibility=hidden \
   -DG_LOG_USE_STRUCTURED \
   -DG_LOG_DOMAIN=\"burro\" \
-  $(DEPS_CFLAGS) \
+  $(GTK3_CFLAGS) \
   $(GUILE_CFLAGS)
-burro_engine_LDADD = $(DEPS_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
+burro_engine_LDADD = $(GTK3_LIBS) $(GUILE_LIBS) -lburrocanvas -lm
 burro_engine_DEPENDENCIES = libburrocanvas.la
 
 libburrocanvas_la_CFLAGS = \
@@ -110,13 +110,14 @@ libburrocanvas_la_CFLAGS = \
   -fvisibility=hidden \
   -DG_LOG_USE_STRUCTURED \
   -DG_LOG_DOMAIN=\"burro-canvas\" \
-  $(DEPS_CFLAGS) \
+  $(GTK3_CFLAGS) \
   $(GUILE_CFLAGS) \
-  $(VORBISFILE_CFLAGS)
+  $(VORBISFILE_CFLAGS) \
+  $(LIBPULSE_CFLAGS)
 libburrocanvas_la_LDFLAGS = -no-undefined -Wl,--no-undefined
-libburrocanvas_la_LIBADD = $(DEPS_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) -lm
+libburrocanvas_la_LIBADD = $(GTK3_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) $(LIBPULSE_LIBS) -lm
 
-snarfcppopts = $(DEFS) $(DEPS_CFLAGS) $(GUILE_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
+snarfcppopts = $(DEFS) $(GTK3_CFLAGS) $(GUILE_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
 
 SUFFIXES = .x
 

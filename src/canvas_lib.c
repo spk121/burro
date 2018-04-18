@@ -155,6 +155,8 @@ xgdk_pixbuf_get_argb32_pixels(GdkPixbuf *pb)
   return (guint32 *) gdk_pixbuf_get_pixels (pb);
 }
 
+#if HAVE_LIBPULSE
+
 static gboolean
 is_valid_pa_context_state_t (pa_context_state_t c)
 {
@@ -376,3 +378,5 @@ xpa_stream_write (pa_stream *p, const void *data, size_t nbytes)
   if (ret != 0)
     g_critical ("pa_stream_write failed");
 }
+
+#endif

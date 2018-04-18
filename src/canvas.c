@@ -56,8 +56,8 @@ tick_cb (GtkWidget *widget,
     if (gtk_widget_is_visible (widget))
     {
         if (canvas_cur->dirty
-            || canvas_bg_is_dirty(0) || canvas_bg_is_dirty(1)
-            || canvas_bg_is_dirty(2) || canvas_bg_is_dirty(3))
+            || canvas_bg_is_dirty(1) || canvas_bg_is_dirty(2)
+            || canvas_bg_is_dirty(3) || canvas_bg_is_dirty(4))
         {
             // Draw it up on a backbuffer
             draw();
@@ -67,10 +67,10 @@ tick_cb (GtkWidget *widget,
             // widget.
             gdk_window_invalidate_rect (gtk_widget_get_window (widget), NULL, FALSE);
 
-            canvas_bg_set_clean(0);
             canvas_bg_set_clean(1);
             canvas_bg_set_clean(2);
             canvas_bg_set_clean(3);
+            canvas_bg_set_clean(4);
             canvas_cur->dirty = FALSE;
         }
     }

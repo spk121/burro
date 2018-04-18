@@ -7,7 +7,9 @@
 #include <cairo.h>
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#ifdef HAVE_LIBPULSE
 #include <pulse/pulseaudio.h>
+#endif
 #ifdef USE_GLIB_MAINLOOP
 # include <pulse/glib-mainloop.h>
 #endif
@@ -34,7 +36,7 @@ DLL_LOCAL void        xgdk_pixbuf_get_width_height_stride (const GdkPixbuf *pb,
                                                       int *stride);
 DLL_LOCAL guint32  *  xgdk_pixbuf_get_argb32_pixels   (GdkPixbuf *pb);
 
-
+#if HAVE_LIBPULSE
 void                xpa_context_connect_to_default_server (pa_context *c);
 pa_context_state_t  xpa_context_get_state              (pa_context *c);
 pa_context *        xpa_context_new_with_proplist      (pa_mainloop_api *mainloop,
@@ -76,4 +78,5 @@ void                xpa_stream_set_write_callback       (pa_stream *p,
 void                xpa_stream_write                   (pa_stream * p,
                                                         const void *data,
                                                         size_t nbytes);
+#endif
 #endif

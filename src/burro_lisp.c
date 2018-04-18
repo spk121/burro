@@ -44,7 +44,7 @@ SCM burro_lisp_new ()
 
     add_site_dir_to_load_path();
 
-    scm_c_use_module ("ice-9 readline");
+    // scm_c_use_module ("ice-9 readline");
     scm_c_use_module ("ice-9 eval-string");
     scm_c_use_module ("ice-9 sandbox");
     scm_c_use_module ("srfi srfi-1");
