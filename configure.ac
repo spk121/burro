@@ -38,9 +38,9 @@ AS_IF([test "x$with_pulseaudio" = xyes],
 ################################################################
 # Guile support details
 GUILE_PKG([2.2])
-GUILE_PROGS
+# GUILE_PROGS
 GUILE_FLAGS
-GUILE_SITE_DIR
+# GUILE_SITE_DIR
 
 AC_ARG_VAR([GUILE_SNARF], [guile snarf compilation tool])
 _guile_suffix=`echo "$GUILE" | sed -e 's,^.*/guile\(.*\)$,\1,'`
