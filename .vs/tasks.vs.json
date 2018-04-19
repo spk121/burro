@@ -1,0 +1,13 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskName": "build-all",
+      "appliesTo": "build.sh",
+      "contextType": "build",
+      "type": "launch",
+      "command": "${env.comspec}",
+      "args" : ["make V=1"]
+    }
+  ]
+}

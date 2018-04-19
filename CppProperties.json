@@ -1,0 +1,87 @@
+{
+  "configurations": [
+    {
+      "inheritEnvironments": [
+        "msvc_x86"
+      ],
+      "name": "x86-Debug",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**"
+      ],
+      "defines": [
+        "WIN32",
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "inheritEnvironments": [
+        "msvc_x86"
+      ],
+      "name": "x86-Release",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**"
+      ],
+      "defines": [
+        "WIN32",
+        "NDEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ],
+      "intelliSenseMode": "windows-msvc-x86"
+    },
+    {
+      "inheritEnvironments": [
+        "msvc_x64"
+      ],
+      "name": "x64-Debug",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**"
+      ],
+      "defines": [
+        "WIN32",
+        "_DEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ],
+      "intelliSenseMode": "windows-msvc-x64"
+    },
+    {
+      "inheritEnvironments": [
+        "msvc_x64"
+      ],
+      "name": "x64-Release",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**"
+      ],
+      "defines": [
+        "WIN32",
+        "NDEBUG",
+        "UNICODE",
+        "_UNICODE"
+      ],
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  ],
+  "environments": [
+    {
+      "MINGW_PREFIX": "C:/msys64/mingw32",
+      "MINGW_CHOST ": "x86_64-w64-mingw32",
+      "MINGW_PACKAGE_PREFIX": "mingw-w64-i686",
+      "MSYSTEM": "MINGW32",
+      "MSYSTEM_CARCH": "i686",
+      "MSYSTEM_PREFIX": "${env.MINGW_PREFIX}",
+      "SHELL": "${env.MINGW_PREFIX}/../usr/bin/bash",
+      "TEMP": "${env.MINGW_PREFIX}/../tmp",
+      "TMP": "${env.TEMP}",
+      "PATH": "${env.MINGW_PREFIX}/bin;${env.MINGW_PREFIX}/../usr/local/bin;${env.MINGW_PREFIX}/../usr/bin;${env.PATH}",
+      "INCLUDE": "project/lib/include;${env.MINGW_PREFIX}/mingw/include;${env.MINGW_PREFIX}/include/c++/7.3.0;${env.MINGW_PREFIX}/include/c++/7.3.0/i686-w64-mingw32;${env.MINGW_PREFIX}/include/c++/7.3.0/backward;${env.MINGW_PREFIX}/lib/gcc/i686-w64-mingw32/7.3.0/include;${env.MINGW_PREFIX}/include;${env.MINGW_PREFIX}/lib/gcc/i686-w64-mingw32/7.3.0/include-fixed;${env.MINGW_PREFIX}/i686-w64-mingw32/include;${env.MINGW_PREFIX}/include/gtk-3.0;${env.MINGW_PREFIX}/include/cairo;${env.MINGW_PREFIX}/include/guile/2.2;${env.MINGW_PREFIX}/include/gio-win32-2.0;${env.MINGW_PREFIX}/include/pango-1.0;${env.MINGW_PREFIX}/include/glib-2.0;${env.MINGW_PREFIX}/lib/glib-2.0/include;${env.MINGW_PREFIX}/include/gdk-pixbuf-2.0;${env.MINGW_PREFIX}/include/atk-1.0"
+    }
+  ]
+}

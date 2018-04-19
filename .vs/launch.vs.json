@@ -1,0 +1,26 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "cppdbg",
+      "name": "burro-engine.exe",
+      "project": "burro-engine",
+      "cwd": "${workspaceRoot}",
+      "program": "src/.libs/burro-engine.exe",
+      "MIMode": "gdb",
+      "miDebuggerPath": "${env.MINGW_PREFIX}\\bin\\gdb.exe",
+      "externalConsole": true
+    },
+    {
+      "cwd": "${workspaceRoot}\\src",
+      "externalConsole": true,
+      "miDebuggerPath": "${env.MINGW_PREFIX}\\bin\\gdb.exe",
+      "MIMode": "gdb",
+      "name": "burro-engine.exe",
+      "program": "${workspaceRoot}\\src\\.libs\\burro-engine.exe",
+      "project": "src\\burro-engine.exe",
+      "type": "cppdbg"
+    }
+  ]
+}
