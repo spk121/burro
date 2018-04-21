@@ -28,7 +28,7 @@
         </child>
       </object>
     </child>
-    <child type="titlebar">
+    <!-- child type="titlebar">
       <object class="GtkHeaderBar" id="header">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
@@ -50,6 +50,6 @@
           </packing>
         </child>
       </object>
-    </child>
+    </child -->
   </template>
 </interface>

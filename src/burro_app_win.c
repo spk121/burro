@@ -19,7 +19,7 @@ struct _BurroAppWindow
     GtkApplicationWindow parent;
     GtkAccelGroup *accels;
     BurroCanvas *canvas;
-    GtkMenuButton *gears;
+    // GtkMenuButton *gears;
     BurroDebugWindow *debug_window;
 
     // The main game loop is in the idle handler.
@@ -490,11 +490,11 @@ burro_app_window_init (BurroAppWindow *win)
                                      win_entries, G_N_ELEMENTS (win_entries),
                                      win);
 
-    builder = gtk_builder_new_from_resource ("/com/lonelycactus/burroengine/gears-menu.ui");
+    // builder = gtk_builder_new_from_resource ("/com/lonelycactus/burroengine/gears-menu.ui");
 
-    menu = G_MENU_MODEL (gtk_builder_get_object (builder, "menu"));
-    gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (win->gears), menu);
-    g_object_unref (builder);
+    // menu = G_MENU_MODEL (gtk_builder_get_object (builder, "menu"));
+    // gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (win->gears), menu);
+    // g_object_unref (builder);
 
     GtkAccelGroup *accel = gtk_accel_group_new();
     GClosure *cl_view = g_cclosure_new(G_CALLBACK(accel_action_view_tools),
@@ -631,7 +631,7 @@ burro_app_window_class_init (BurroAppWindowClass *class)
     gtk_widget_class_set_template_from_resource (gtkclass, APP_WINDOW);
 
     gtk_widget_class_bind_template_child (gtkclass, BurroAppWindow, canvas);
-    gtk_widget_class_bind_template_child (gtkclass, BurroAppWindow, gears);
+    // gtk_widget_class_bind_template_child (gtkclass, BurroAppWindow, gears);
 }
 
 BurroAppWindow *
