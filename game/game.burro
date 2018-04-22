@@ -1,0 +1,90 @@
+;; -*- mode: scheme -*-
+(bg-reset BG_1)
+
+(define (One)
+  (set-backdrop "ghost white")
+  (set-font-color "dark slate gray")
+  (timed-text 
+   `(markup
+     (big (b "NOT SO LONG AGO")))
+   Two
+   #:time-limit 5 #:y (/ (canvas-height) 2) #:x (/ (canvas-width) 2)))
+
+(define (Two)
+  (set-backdrop "AntiqueWhite3")
+  (load-image-file "bike1.jpg" VRAM_A)
+  (bg-setup BG_1 VRAM_A)
+  ;;(bg-set-brightness 0.4)
+  (timed-text
+   '(markup "")
+   Three
+   #:time-limit 5))
+
+(define (Three)
+  (bg-reset BG_1)
+  (timed-text
+   `(markup
+     (span (@ (font "Serif") (variant "smallcaps"))
+	   "Copyright, 1927, by\nHardcourt, Brice and Company, Inc")
+     "\n\n"
+     (small (i ,(string-append "This book is complete and unabridged.  It is "
+		       "manufactured under wartime conditions in "
+		       "conformity with all government regulations "
+		       "controlling all use of paper and other "
+		       "materials.")))
+     "\n\n"
+     (span (@ (font "Serif") (font_variant "smallcaps"))
+	   "Printed in the U.S.A"))
+     
+   Four
+   #:time-limit 6
+   #:y (/ (canvas-height) 2) #:x 70))
+
+(define (Four)
+  (set-font "Fira Sans 26,Sans 26")
+  (timed-text
+   '(markup
+     "PART ONE\n\n"
+     
+     (b "Life's but\n\na waking shadow"))
+   Five
+   #:time-limit 6
+   #:y (/ (canvas-height) 3) #:x 70))
+   
+(define (Five)
+  (set-font "Serif")
+  (clickable-text
+   `(markup
+     "Spring had come at last. It was 1896, and modern-minded young men "
+     "were eagerly pursuing the happiness on wheels.  The bicycle craze "
+     "has swept the country.  Old-fashioned folk deplored it.  Eminent "
+     "clergymen railed against it, but, even the highest circles of fashion "
+     "had succomed to this vogue."
+     "\n\n"
+     (a (@ (action ,Six)) "Shocking"))))
+
+(define (Six)
+  (load-image-file "street1.jpg" VRAM_A)
+  (bg-setup BG_4 VRAM_A)
+  (load-image-file "MrWells.png" VRAM_B)
+  (let* ((siz (get-vram-image-size VRAM_B))
+	 (img-width (car siz))
+	 (img-height (cadr siz))
+	 (img-i 0)
+	 (img-j (- (canvas-height) img-height)))
+    (log-info "width ~A height ~A i ~A j ~A" img-width img-height img-i img-j)
+    (bg-setup BG_3 VRAM_B)
+    (bg-set-position BG_3 img-i img-j))
+  (set-markup-bgcolor "dim gray" 0.8)
+  (set-font-color "alice blue")
+  (timed-text
+   '(markup
+     (u "Mr Wells:")
+     "\n\tThis is placeholder text that Mr Wells is saying.")
+   (lambda () #f)
+   #:time-limit 50
+   #:y 330 #:x 70 #:width 500))
+   
+
+(Six)
+
