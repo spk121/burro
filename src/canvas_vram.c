@@ -361,8 +361,8 @@ canvas_vram_is_valid_filename (const char *filename)
 static gboolean
 set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
 {
-    g_return_val_if_fail (vram_index >= 0
-                          && vram_index < VRAM_COUNT, FALSE);
+    g_return_val_if_fail (vram_index >= VRAM_A
+                          && vram_index <= VRAM_H, FALSE);
     g_return_val_if_fail (filename != NULL, FALSE);
 
     if (!canvas_vram_is_valid_filename (filename))

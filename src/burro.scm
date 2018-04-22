@@ -23,7 +23,8 @@
   #:use-module (burro error)
   #:use-module (burro debug)
   #:use-module (ice-9 sandbox)
-  #:re-export (clickable-text)
+  #:re-export (clickable-text
+	       timed-text)
   #:export (make-sandbox
 	    load-file-into-sandbox
 	    eval-string-in-sandbox
@@ -38,7 +39,8 @@
      color)
 
     ((burro drivers)
-     clickable-text)
+     clickable-text
+     timed-text)
 
     ((burro pm)
      pm-info)
@@ -49,6 +51,8 @@
      ;; receive-clock-tick
      ;; register-game-loop-handler
      ;; From Canvas
+     canvas-width
+     canvas-height
      set-brightness
      get-brightness
      set-colorswap
@@ -58,6 +62,7 @@
      set-backdrop
      get-backdrop
      set-markup
+     set-markup-bgcolor
      set-font
      set-font-color
      VRAM_A

@@ -52,7 +52,7 @@ typedef struct
 
     /** when true, there are changes to the background that need
      *  to be rendered. */
-    double dirty;
+    gboolean dirty;
 
     /** for BMP background, the VRAM store from which the BMP is
      * taken.  Form MAP backgrounds, the tilesheet. */
@@ -134,7 +134,7 @@ canvas_bg_init ()
 {
     bg.colorswap = FALSE;
     bg.brightness = 1.0;
-    for (int i = BG_1; i < BG_4; i ++)
+    for (int i = BG_1; i <= BG_4; i ++)
     {
         bg.bg[i].enable = FALSE;
         bg.bg[i].type = BG_TYPE_NONE;
@@ -363,7 +363,7 @@ SCM_DEFINE (G_set_background_image, "bg-setup", 2, 4, 0,
 
     int id = scm_to_int (s_id);
     int vram = scm_to_int (s_vram);
-    if (vram_get_type (vram == VRAM_TYPE_IMAGE))
+    if (vram_get_type (vram) == VRAM_TYPE_IMAGE)
     {
         bg.bg[id].enable = TRUE;
         bg.bg[id].type = BG_TYPE_BMP;
@@ -426,6 +426,8 @@ SCM_DEFINE (G_bg_set_position, "bg-set-position", 3, 4, 0,
         bg.bg[i].expansion = scm_to_double (expansion);
     if (!SCM_UNBNDP(rotation))
         bg.bg[i].rotation = scm_to_double (rotation);
+    bg.bg[i].dirty = TRUE;
+    
     return SCM_UNSPECIFIED;
 }
 
@@ -451,6 +453,7 @@ SCM_DEFINE (G_reset_background, "bg-reset", 1, 0, 0,
     
     int i = scm_to_int (id);
     bg_reset(i);
+    bg.bg[scm_to_int(id)].dirty = TRUE;
         
     return SCM_UNSPECIFIED;    
 }
@@ -464,6 +467,8 @@ Set background later ID to not be drawn")
         scm_out_of_range ("bg-hide", id);
 
     bg_hide (scm_to_int (id));
+    bg.bg[scm_to_int(id)].dirty = TRUE;
+
     return SCM_UNSPECIFIED;
 }
 
@@ -473,8 +478,8 @@ Set background later ID to be drawn")
     SCM_ASSERT (scm_is_signed_integer (id, BG_1, BG_4), id, SCM_ARG1, "bg-show");
 
     int i = scm_to_int (id);
-    if (bg.bg[i].type != BG_TYPE_NONE)
-        bg_show (i);
+    bg_show (i);
+    bg.bg[i].dirty = TRUE;
     return SCM_UNSPECIFIED;
 }
 
@@ -501,6 +506,15 @@ set the colorswap boolean flag for backgrounds.")
         bg.colorswap = TRUE;
     else if (scm_is_false(flag))
         bg.colorswap = FALSE;
+    
+    for (int i = BG_1; i <= BG_4; i ++)
+    {
+        if (bg.bg[i].enable)
+        {
+            bg.surf[i] = bg_render_to_cairo_surface(i);
+            bg.bg[i].dirty = TRUE;
+        }
+    }
     return SCM_UNSPECIFIED;
 }
 
@@ -515,7 +529,7 @@ Adjusts the brightness of all the colors used in backgrounds. Usually \n\
 a value between 0.0 (black) and 1.0 (unmodified colors).")
 {
     bg.brightness = scm_to_double(x);
-    for (int i = 0; i < 4; i ++)
+    for (int i = BG_1; i <= BG_4; i ++)
     {
         if (bg.bg[i].enable)
         {

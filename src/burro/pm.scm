@@ -151,7 +151,7 @@
 	(var-set! process 'text-move (pm-get-text-move))
 	(var-set! process 'text-move #f))))
 
-(define (pm-update delta-milliseconds)
+(define (pm-update delta-seconds)
   (when (pm-has-processes?)
     (for-each
      (lambda (p)
@@ -169,7 +169,7 @@
 	   (when (and (process-is-active? p)
 		      (not (process-is-paused? p)))
 	     (pm-deliver-events-to-process p)
-	     (process-on-update p delta-milliseconds))))
+	     (process-on-update p delta-seconds))))
      *process-list*))
   ;; Clear out any old mouse events
   (when (pm-has-mouse-move?)
@@ -183,7 +183,7 @@
   ;; Return whether there are any processes remaining.
   (pm-has-processes?))
 
-;; (define (pm-update-or-error-string delta-milliseconds)
-;;   ;;(false-if-exception (pm-update delta-milliseconds)))
+;; (define (pm-update-or-error-string delta-seconds)
+;;   ;;(false-if-exception (pm-update delta-seconds)))
 ;;   (string-if-exception
-;;    (pm-update delta-milliseconds)))
+;;    (pm-update delta-seconds)))

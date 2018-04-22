@@ -4,6 +4,9 @@
 /* This is just a game.  It is not DO-178C. Let's put all of our
  * parameter checking paranoia in here, so it doesn't clutter up the
  * rest of the code. */
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
 #include <cairo.h>
 #include <glib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>

@@ -165,7 +165,7 @@
   (next-getter         get-next-getter-func set-next-getter-func!)
   ;; (process)
   (next-setter         get-next-setter-func set-next-setter-func!)
-  ;; (delta-milliseconds)
+  ;; (delta-seconds)
   (on-update           get-on-update-func set-on-update-func!)
   ;; ()
   (on-initialize      get-on-initialize-func set-on-initialize-func!))
@@ -217,8 +217,8 @@
   (and=> (get-next-getter-func p) p))
 (define (process-set-next! p next-process)
   (and=> (get-next-setter-func p) p next-process))
-(define (process-on-update p delta-milliseconds)
-  (and=> (get-on-update-func p) p delta-milliseconds))
+(define (process-on-update p delta-seconds)
+  (and=> (get-on-update-func p) p delta-seconds))
 (define (process-on-initialize p)
   (and=> (get-on-initialize-func p) p))
 
@@ -268,7 +268,7 @@
   (get-next p))
 (define (base-process-set-next! p next-process)
   (set-next! p next-process))
-(define (base-process-on-update p delta-milliseconds)
+(define (base-process-on-update p delta-seconds)
   (when (get-initial-update-flag p)
     (let ((func (get-on-initialize-func p)))
       (when func

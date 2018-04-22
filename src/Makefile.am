@@ -15,6 +15,7 @@ DOT_X_FILES = \
 libburrocanvas_la_SOURCES = \
  canvas.c canvas.h canvas.x \
  canvas_audio.c canvas_audio.h canvas_audio.x \
+ canvas_pulseaudio.c canvas_pulseaudio.h canvas_pulseaudio.x \
  canvas_bg.c canvas_bg.h canvas_bg.x \
  canvas_colors.c canvas_colors.h \
  canvas_lib.c canvas_lib.h \

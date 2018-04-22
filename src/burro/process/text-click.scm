@@ -61,8 +61,8 @@ if it changed or #f otherwise."
 		       0.0))
        action-list))
 
-(define (on-update self delta-milliseconds)
-  (base-process-on-update self delta-milliseconds)
+(define (on-update self delta-seconds)
+  (base-process-on-update self delta-seconds)
   (when (get-active-flag self)
     ;; Handle the movement of the mouse over text.
     (let ((location (var-ref self 'text-move)))
@@ -79,7 +79,7 @@ if it changed or #f otherwise."
     ;; change, change the color of the hotspot on the screen.
     (for-each
      (lambda (hotspot)
-       (let ((changed? (update-hotspot hotspot delta-milliseconds)))
+       (let ((changed? (update-hotspot hotspot delta-seconds)))
 	 (when changed?
 	   (let ((color (dissolve-color (var-ref self 'cold-color)
 					(var-ref self 'hot-color)

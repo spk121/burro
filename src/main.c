@@ -9,6 +9,7 @@ int
 main (int argc, char *argv[])
 {
     setlocale (LC_ALL, "");
+    
     extern void scm_c_set_default_vm_engine_x (int x);
     scm_c_set_default_vm_engine_x (1);
     scm_init_guile ();

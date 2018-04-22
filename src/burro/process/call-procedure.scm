@@ -8,8 +8,8 @@
 
 ;; It just runs a procedure and immediately quits
 
-(define (on-update p delta-milliseconds)
-  (base-process-on-update p delta-milliseconds)
+(define (on-update p delta-seconds)
+  (base-process-on-update p delta-seconds)
   (process-kill! p)
   ((var-ref p 'procedure)))
 

@@ -10,9 +10,9 @@
 #include "burro_debug_window.h"
 #include "burro_repl.h"
 
-#define GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS (1000000 / 60)
-#define GAME_LOOP_IDEAL_PERIOD_MICROSECONDS (1000000 / 30)
-#define GAME_LOOP_MAXIMUM_PERIOD_MICROSECONDS (1000000 / 10)
+#define GAME_LOOP_MINIMUM_PERIOD_SECONDS (1.0 / 60.0)
+#define GAME_LOOP_IDEAL_PERIOD_SECONDS (1.0 / 30.0)
+#define GAME_LOOP_MAXIMUM_PERIOD_SECONDS (0.1)
 #define __maybe_unused __attribute__((unused))
 struct _BurroAppWindow
 {
@@ -30,12 +30,12 @@ struct _BurroAppWindow
     gboolean game_loop_active_flag;
     gboolean game_loop_step_flag;
     gboolean game_loop_quitting;
-    gint64 game_loop_start_time;
-    gint64 game_loop_end_time;
-    gint64 game_loop_start_time_prev;
+    double game_loop_start_time;
+    double game_loop_end_time;
+    double game_loop_start_time_prev;
     gboolean game_loop_full_speed;
-    gint64 game_loop_avg_period;
-    gint64 game_loop_avg_duration;
+    double game_loop_avg_period;
+    double game_loop_avg_duration;
 
     gboolean have_mouse_move_event;
     double mouse_move_x;
@@ -339,9 +339,9 @@ call_pm_set_text_click (void *_win)
 static SCM
 call_pm_update (void *_pdt)
 {
-    gint64 *pdt = _pdt;
+    double *pdt = _pdt;
     scm_call_1 (scm_c_public_ref ("burro pm", "pm-update"),
-                scm_from_int64(*pdt));
+                scm_from_double(*pdt));
     return SCM_BOOL_T;
 }
                 
@@ -360,17 +360,17 @@ game_loop (gpointer user_data)
         {
             win->game_loop_step_flag = FALSE;
 
-            gint64 start_time = g_get_monotonic_time();
-            if (win->game_loop_full_speed || ((start_time - win->game_loop_start_time) > GAME_LOOP_MINIMUM_PERIOD_MICROSECONDS))
+            double start_time = g_get_monotonic_time() * 1.0e-6;
+            if (win->game_loop_full_speed || ((start_time - win->game_loop_start_time) > GAME_LOOP_MINIMUM_PERIOD_SECONDS))
             {
                 win->game_loop_start_time_prev = win->game_loop_start_time;
                 win->game_loop_start_time = start_time;
-                gint64 dt = start_time - win->game_loop_start_time_prev;
+                double dt = start_time - win->game_loop_start_time_prev;
 
                 // If dt is too large, maybe we're resuming from a break point.
                 // Frame-lock to the target rate for this frame.
-                if (dt > GAME_LOOP_MAXIMUM_PERIOD_MICROSECONDS)
-                    dt = GAME_LOOP_IDEAL_PERIOD_MICROSECONDS;
+                if (dt > GAME_LOOP_MAXIMUM_PERIOD_SECONDS)
+                    dt = GAME_LOOP_IDEAL_PERIOD_SECONDS;
 
                 // Update the audio engine
                 canvas_audio_iterate();
@@ -426,16 +426,16 @@ game_loop (gpointer user_data)
 
                 // Keep some statistics on frame rate, and computation time
                 win->game_loop_frame_count ++;
-                win->game_loop_avg_period = ((19 * win->game_loop_avg_period) / 20
-                                                 + dt / 20);
+                win->game_loop_avg_period = (0.95 * win->game_loop_avg_period
+                                             + 0.05 * dt);
 
-                win->game_loop_end_time = g_get_monotonic_time();
-                win->game_loop_avg_duration = ((19 * win->game_loop_avg_duration) / 20
-                                               + (win->game_loop_end_time - win->game_loop_start_time) / 20);
+                win->game_loop_end_time = g_get_monotonic_time() * 1.0e-6;
+                win->game_loop_avg_duration = (0.95 * win->game_loop_avg_duration
+                                               + 0.5 * (win->game_loop_end_time - win->game_loop_start_time));
 
                 if (!(win->game_loop_frame_count % 60))
                 {
-                    char *update_rate_str = g_strdup_printf("%.1f", 1000000.0 / win->game_loop_avg_period);
+                    char *update_rate_str = g_strdup_printf("%.1f", 1.0 / win->game_loop_avg_period);
                     char *duty_cycle_str = g_strdup_printf("%.1f%%", (100.0 * win->game_loop_avg_duration) / win->game_loop_avg_period);
                     if (win->debug_window)
                     {
@@ -543,13 +543,13 @@ burro_app_window_init (BurroAppWindow *win)
     // Main Game Loop
     win->game_loop_active_flag = TRUE;
     win->game_loop_quitting = FALSE;
-    win->game_loop_start_time = g_get_monotonic_time ();
-    win->game_loop_end_time = g_get_monotonic_time ();
-    win->game_loop_start_time_prev = win->game_loop_start_time - GAME_LOOP_IDEAL_PERIOD_MICROSECONDS;
+    win->game_loop_start_time = g_get_monotonic_time () * 1.0e-6;
+    win->game_loop_end_time = g_get_monotonic_time () * 1.0e-6;
+    win->game_loop_start_time_prev = win->game_loop_start_time - GAME_LOOP_IDEAL_PERIOD_SECONDS;
     win->game_loop_full_speed = FALSE;
     win->game_loop_frame_count = 0;
-    win->game_loop_avg_period = GAME_LOOP_IDEAL_PERIOD_MICROSECONDS;
-    win->game_loop_avg_duration = GAME_LOOP_IDEAL_PERIOD_MICROSECONDS / 4;
+    win->game_loop_avg_period = GAME_LOOP_IDEAL_PERIOD_SECONDS;
+    win->game_loop_avg_duration = GAME_LOOP_IDEAL_PERIOD_SECONDS / 4.0;
 
     win->game_loop_callback_id = g_idle_add_full (G_PRIORITY_DEFAULT_IDLE,
                                        game_loop,
@@ -646,15 +646,24 @@ burro_app_window_open (BurroAppWindow *win,
                        GFile *file)
 {
     char *err_string;
+    char *full;
+    char *dir;
+    
+    if (file)
+    {
+        full = g_file_get_path (file);
+        dir = g_path_get_dirname (full);
+        g_debug("set vram path. full = %s dir = %s", full, dir);
+        canvas_vram_set_path(dir);
+        g_free (full);
+        full = NULL;
+    }
+    
     win->sandbox = burro_make_sandbox (file, &err_string);
     if (file)
     {
-        char *full = g_file_get_path (file);
-        char *dir = g_path_get_dirname (full);
-        canvas_vram_set_path(dir);
         free (win->sandbox_path);
         win->sandbox_path = dir;
-        g_free (full);
     }
     else
     {

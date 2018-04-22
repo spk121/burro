@@ -24,17 +24,17 @@ PKG_CHECK_MODULES([GTK3],[gtk+-3.0 gio-2.0 glib-2.0])
 PKG_CHECK_MODULES([VORBISFILE],[vorbisfile])
 
 AC_ARG_WITH([libpulse],
-            [AS_HELP_STRING([--with-libpulse],
+            [AS_HELP_STRING([--with-pulseaudio],
                             [enable support for pulseaudio])],
             [with_libpulse=yes],
             [with_libpulse=no])
           
 LIBPULSE=
-AS_IF([test "x$with_pulseaudio" = xyes],
+AS_IF([test "x$with_libpulse" = xyes],
       [PKG_CHECK_MODULES([LIBPULSE], [libpulse],
                          [AC_DEFINE([HAVE_LIBPULSE], [1],
                                     [Define if you have Pulseaudio's libpulse])],
-                         [AC_MSG_FAILURE([--with-libpulse was given, but test for Pulseaudio failed])])])
+                         [AC_MSG_FAILURE([--with-pulseaudio was given, but test for Pulseaudio's libpulse failed])])])
 ################################################################
 # Guile support details
 GUILE_PKG([2.2])
@@ -105,10 +105,3 @@ AC_CONFIG_FILES([src/uninstalled-env], [chmod +x src/uninstalled-env])
 AC_OUTPUT
 AC_SUBST([guilesitedir])
 
-if test "$guilesitedir" != "$GUILE_SITE"; then
-   # Guile has a different prefix than this module
-   AC_MSG_WARN([]
-   [The Guile modules will be installed in '${guilesitedir}',]
-   [thus, this program will add that directory to the]
-   [Guile load path].)
-fi

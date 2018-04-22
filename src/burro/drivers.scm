@@ -2,12 +2,15 @@
   #:use-module (burro engine)
   #:use-module (burro pm)
   #:use-module (burro process base)
+  #:use-module (burro process call-procedure)
   #:use-module (burro process fade)
   #:use-module (burro process text-click)
+  #:use-module (burro process wait)
   #:use-module (burro xml)
   #:use-module (srfi srfi-1)
   #:use-module (sxml simple)
-  #:export (clickable-text))
+  #:export (clickable-text
+	    timed-text))
 
 (define (find-action actions index)
   "Searches in the action list for an entry that is active for index."
@@ -51,29 +54,45 @@ actions, they are activated."
   ;; We let the caller drop the uninteresting *TOP* node
   (let ((burro-sxml-tree
 	 `(*TOP* ,burro-sxml-tree-inner)))
-    ;; (format #t "BURRO SXML TREE ~s~%" burro-sxml-tree)
     (let ((actions (sxml-locate-actions burro-sxml-tree))
 	  (pango-sxml-tree (sxml-style-actions burro-sxml-tree)))
-      ;; (format #t "ACTIONS ~S~%" actions)
-      ;; (format #t "PANGO_SXML TREE ~S~%" pango-sxml-tree)
       (let ((pango-xml-string
 	     (with-output-to-string
 	       (lambda () (sxml->xml pango-sxml-tree)))))
-	;; (format #t "PANGO XML STRING ~S~%" pango-xml-string)
 	;; Write the string to the screen
 	(set-markup pango-xml-string)
 	
 	;; And now set up a script for the process manager.
-	(let ((one (fade-in-process 500000))
+	(let ((one (fade-in-process 0.5))
 	      (two (text-click-process actions
 				       "alice blue"
 				       "cornflower blue"
-				       500000))
-	      (three (fade-out-process 500000)))
+				       0.5))
+	      (three (fade-out-process 0.5)))
 	  (process-set-next! one two)
 	  (process-set-next! two three)
 	  (pm-attach one))))))
-	  
+
+(define* (timed-text burro-sxml-tree-inner next #:key
+		     (time-limit 4.0) x y width height)
+  ;; We let the caller drop the uninteresting *TOP* node
+  (let ((pango-sxml-tree
+	 `(*TOP* ,burro-sxml-tree-inner)))
+    (let ((pango-xml-string
+	   (with-output-to-string
+	     (lambda () (sxml->xml pango-sxml-tree)))))
+      (set-markup pango-xml-string x y width height)
+	
+      ;; And now set up a script for the process manager.
+      (let ((one (fade-in-process 0.5))
+	    (two (wait-process time-limit))
+	    (three (fade-out-process 0.5))
+	    (four (call-procedure-process next)))
+	(process-set-next! one two)
+	(process-set-next! two three)
+	(process-set-next! three four)
+	(pm-attach one)))))
+
 					   
 	  
 	

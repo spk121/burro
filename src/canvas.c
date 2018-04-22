@@ -23,8 +23,11 @@ struct _BurroCanvas
 
     PangoLayout *layout;
     gboolean layout_flag;
-    int layout_priority;
+    int layout_zlevel;
     guint32 font_color;
+    guint32 layout_bgcolor;
+    double layout_x, layout_y;
+    double layout_width, layout_height;
 
     guint tick_cb_id;
 };
@@ -170,27 +173,55 @@ static void draw_background_layer (int layer)
     // xcairo_surface_destroy (surf);
 }
 
-static void draw_textbox()
+static void draw_textbox(guint32 bgcolor)
 {
     cairo_save (canvas_cur->context);
-    double r = 0.0, g = 0.0, b = 0.0;
-    guint32 c32 = canvas_cur->font_color;
-    r = ((double)((c32 & 0x00ff0000) >> 16)) / 255.0;
-    g = ((double)((c32 & 0x0000ff00) >> 8)) / 255.0;
-    b = ((double)((c32 & 0x000000ff))) / 255.0;
-    if (canvas_cur->colorswap_flag)
+    double r = 0.0, g = 0.0, b = 0.0, a = 0.0;
+    for (int i = 0; i < 2; i ++)
     {
-        double tmp = r;
-        r = b;
-        b = tmp;
+        guint32 c32;
+        if (i == 0)
+            c32 = bgcolor;
+        else
+            c32 = canvas_cur->font_color;
+        a = ((double)((c32 & 0xff000000) >> 24)) / 255.0;
+        r = ((double)((c32 & 0x00ff0000) >> 16)) / 255.0;
+        g = ((double)((c32 & 0x0000ff00) >> 8)) / 255.0;
+        b = ((double)((c32 & 0x000000ff))) / 255.0;
+        if (canvas_cur->colorswap_flag)
+        {
+            double tmp = r;
+            r = b;
+            b = tmp;
+        }
+        r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0); 
+        g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0); 
+        b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0); 
+        if (i == 0 && bgcolor)
+        {
+            PangoRectangle ink_extents;
+            pango_layout_get_extents (canvas_cur->layout, &ink_extents, NULL);
+            int width = ink_extents.width / PANGO_SCALE;
+            int height = ink_extents.height / PANGO_SCALE;
+            cairo_set_source_rgba(canvas_cur->context, r, g, b, a);
+            cairo_set_line_width(canvas_cur->context, 1);
+#define LAYOUT_MARGIN 5
+            cairo_rectangle(canvas_cur->context,
+                            canvas_cur->layout_x - LAYOUT_MARGIN,
+                            canvas_cur->layout_y - LAYOUT_MARGIN,
+                            width + 2 * LAYOUT_MARGIN,
+                            height + 2 * LAYOUT_MARGIN);
+#undef LAYOUT_MARGIN
+            cairo_stroke_preserve(canvas_cur->context);
+            cairo_fill(canvas_cur->context);        
+        }
+        else
+        {
+            cairo_set_source_rgb (canvas_cur->context, r, g, b);
+            cairo_move_to(canvas_cur->context, canvas_cur->layout_x, canvas_cur->layout_y);
+            pango_cairo_show_layout (canvas_cur->context, canvas_cur->layout);
+        }
     }
-    r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0); 
-    g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0); 
-    b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0); 
-    cairo_set_source_rgb (canvas_cur->context, r, g, b);
-    
-    cairo_move_to(canvas_cur->context, CANVAS_MARGIN, CANVAS_MARGIN);
-    pango_cairo_show_layout (canvas_cur->context, canvas_cur->layout);
     cairo_restore(canvas_cur->context);
 }
 
@@ -201,30 +232,29 @@ static void draw ()
     if (canvas_cur->blank_flag)
         goto end_draw;
 
-    for (int z = CANVAS_ZLEVEL_COUNT - 1; z >= 0; z --)
+    // There are five levels: 4, 3, 2, 1, 0.  Zero is on top.
+    // The backgrounds are set to be levels 4, 3, 2, 1.
+    // The text is by default 0, but, that can be changed.
+    for (int z = CANVAS_ZLEVEL_COUNT; z >= 0; z --)
     {
-        if (canvas_bg_is_shown (z + BG_1))
-            draw_background_layer (z + BG_1);
+        if (z >= BG_1 && canvas_bg_is_shown (z))
+            draw_background_layer (z);
+        if (canvas_cur->layout_flag && (canvas_cur->layout_zlevel == z))
+            draw_textbox (canvas_cur->layout_bgcolor);
     }
 #if 0
-    for (int priority = PRIORITY_COUNT - 1; priority >= 0; priority --)
+    for (int zlevel = ZLEVEL_COUNT - 1; zlevel >= 0; zlevel --)
     {
         SCM obj_display_list = scm_variable_ref(G_obj_display_list);
         for (int id = scm_to_int (scm_length (obj_display_list)) - 1; id >= 0; id --)
         {
             SCM obj = scm_list_ref (obj_display_list, scm_from_int (id));
-            if (obj_get_priority (obj) == priority)
+            if (obj_get_zlevel (obj) == zlevel)
                 draw_obj (obj);
         }
         SCM textbox = scm_variable_ref (G_textbox_var);
     }
 #endif
-
-    for (int priority = CANVAS_ZLEVEL_COUNT - 1; priority >= 0; priority --)
-    {
-        if (canvas_cur->layout_flag && (canvas_cur->layout_priority == priority))
-            draw_textbox ();
-    }
 
 end_draw:
 
@@ -263,8 +293,9 @@ burro_canvas_init (BurroCanvas *win)
     // Set up the text drawing
     win->layout = pango_cairo_create_layout (win->context);
     win->layout_flag = FALSE;
-    win->layout_priority = 0;
+    win->layout_zlevel = 0;
     win->font_color = 0xB2B2B2;
+    win->layout_bgcolor = 0x0;
 
     /* Set the font. */
     PangoFontDescription *desc = pango_font_description_from_string("Serif 16");
@@ -272,8 +303,12 @@ burro_canvas_init (BurroCanvas *win)
     pango_font_description_free (desc);
 
     /* Set up word wrapping. */
-    pango_layout_set_width (win->layout, CANVAS_WIDTH * PANGO_SCALE);
-    pango_layout_set_height (win->layout, CANVAS_HEIGHT * PANGO_SCALE);
+    win->layout_width = CANVAS_WIDTH;
+    win->layout_height = CANVAS_HEIGHT;
+    win->layout_x = CANVAS_MARGIN;
+    win->layout_y = CANVAS_MARGIN;
+    pango_layout_set_width (win->layout, win->layout_width * PANGO_SCALE);
+    pango_layout_set_height (win->layout, win->layout_height * PANGO_SCALE);
     pango_layout_set_wrap (win->layout, PANGO_WRAP_WORD_CHAR);
     
     win->tick_cb_id = gtk_widget_add_tick_callback (GTK_WIDGET(win),
@@ -498,13 +533,60 @@ SCM_DEFINE (G_canvas_set_default_font_color, "set-font-color", 1, 0, 0,
     return scm_from_bool (ret);
 }
 
-SCM_DEFINE(G_canvas_set_markup, "set-markup", 1, 0, 0, (SCM s_str), "\
+SCM_DEFINE (G_canvas_set_default_font_bgcolor, "set-markup-bgcolor", 1, 1, 0,
+            (SCM s_str, SCM opacity), "")
+{
+    SCM_ASSERT (scm_is_string (s_str), s_str, SCM_ARG1, "set-font");
+
+    char *str = scm_to_utf8_string (s_str);
+    guint32 colorval;
+    gboolean ret = canvas_lookup_colorval (str, &colorval);
+    free (str);
+    if (ret)
+    {
+        if (!SCM_UNBNDP (opacity))
+        {
+            double op = scm_to_double(opacity);
+            guint32 opval = round(op * 255.0);
+            colorval |= opval << 24;
+        }
+        else
+            colorval |= 0xFF000000;
+        canvas_cur->layout_bgcolor = colorval;
+    }
+    return scm_from_bool (ret);
+}
+
+
+SCM_DEFINE(G_canvas_set_markup, "set-markup", 1, 4, 0,
+           (SCM s_str, SCM x, SCM y, SCM width, SCM height), "\
 Given a string, possibly with Pango-style XML markup, sets the\n\
 textbox text.")
 {
     SCM_ASSERT (scm_is_string (s_str), s_str, SCM_ARG1, "set-markup");
     char *str = scm_to_utf8_string (s_str);
     pango_layout_set_markup (canvas_cur->layout, str, -1);
+    if (SCM_UNBNDP (x) || scm_is_false(x))
+        canvas_cur->layout_x = CANVAS_MARGIN;
+    else
+        canvas_cur->layout_x = scm_to_double(x);
+    if (SCM_UNBNDP (y) || scm_is_false(y))
+        canvas_cur->layout_y = CANVAS_MARGIN;
+    else
+        canvas_cur->layout_y = scm_to_double(y);
+    if (SCM_UNBNDP (width) || scm_is_false(width))
+        canvas_cur->layout_width = CANVAS_WIDTH;
+    else
+        canvas_cur->layout_width = scm_to_double(width);
+    if (SCM_UNBNDP (height) || scm_is_false(height))
+        canvas_cur->layout_height = CANVAS_HEIGHT;
+    else
+        canvas_cur->layout_height = scm_to_double(height);
+
+    pango_layout_set_width (canvas_cur->layout, canvas_cur->layout_width * PANGO_SCALE);
+    pango_layout_set_height (canvas_cur->layout, canvas_cur->layout_height * PANGO_SCALE);
+    pango_layout_set_wrap (canvas_cur->layout, PANGO_WRAP_WORD_CHAR);
+
     free (str);
     canvas_cur->layout_flag = TRUE;
     
@@ -591,6 +673,15 @@ or an codepoint index otherwise.")
     return scm_from_int(offset);
 }
 
+SCM_DEFINE (G_canvas_width, "canvas-width", 0, 0, 0, (void), "")
+{
+    return scm_from_int (CANVAS_WIDTH);
+}
+
+SCM_DEFINE (G_canvas_height, "canvas-height", 0, 0, 0, (void), "")
+{
+    return scm_from_int (CANVAS_HEIGHT);
+}
 
 void
 canvas_init_guile_procedures ()
@@ -610,10 +701,13 @@ canvas_init_guile_procedures ()
                   "set-backdrop",
                   "get-backdrop",
                   "set-markup",
+                  "set-markup-bgcolor",
                   "position-to-string-index",
                   "update-text-fgcolor-on-region",
                   "set-font",
                   "set-font-color",
+                  "canvas-width",
+                  "canvas-height",
                   NULL);
 }
 

@@ -1,3 +1,7 @@
+#if HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include "canvas_audio.h"
 
 #include <math.h>
@@ -29,9 +33,6 @@ static const ov_callbacks ov_cb = {
 
 #define AM_CHANNELS_NUM 4
 #define AM_OV_READ_BUFFER_SIZE 4096
-#define AM_SAMPLE_RATE_IN_HZ (48000u)
-#define AM_BUFFER_DURATION_IN_MILLISECONDS (2000u)
-#define AM_BUFFER_SIZE ((AM_SAMPLE_RATE_IN_HZ * AM_BUFFER_DURATION_IN_MILLISECONDS) / 1000)
 
 #define AM_CHANNEL_TYPE_NONE (0)
 #define AM_CHANNEL_TYPE_OGV (1)
@@ -63,7 +64,21 @@ typedef struct audio_model_tag {
 
 static audio_model_t am;
 
-static gboolean
+float *
+am_buffer()
+{
+    return am.buffer;
+}
+
+void
+am_default_volume()
+{
+    am.volume = 1.0;
+    am.playing = TRUE;
+    for (int i = 0; i < 4; i ++)
+        am.channels[i].volume = 1.0;
+}
+bool
 am_is_playing()
 {
     gboolean no_audio;
@@ -173,7 +188,8 @@ am_fetch_audio (int chan_num, int samples_requested)
     }
 }
 
-static void
+
+void
 am_update(int n)
 {
     int c;
