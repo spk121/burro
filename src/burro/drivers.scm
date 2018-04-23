@@ -49,7 +49,9 @@ actions, they are activated."
 ;; - listens for mouse
 ;; - fades out
 ;; - calls next handler
-(define (clickable-text burro-sxml-tree-inner)
+(define* (clickable-text burro-sxml-tree-inner #:key
+			x y width height
+			(fade-time 0.5))
 
   ;; We let the caller drop the uninteresting *TOP* node
   (let ((burro-sxml-tree
@@ -60,21 +62,22 @@ actions, they are activated."
 	     (with-output-to-string
 	       (lambda () (sxml->xml pango-sxml-tree)))))
 	;; Write the string to the screen
-	(set-markup pango-xml-string)
+	(set-markup pango-xml-string x y width height)
 	
 	;; And now set up a script for the process manager.
-	(let ((one (fade-in-process 0.5))
+	(let ((one (fade-in-process fade-time))
 	      (two (text-click-process actions
 				       "alice blue"
 				       "cornflower blue"
 				       0.5))
-	      (three (fade-out-process 0.5)))
+	      (three (fade-out-process fade-time)))
 	  (process-set-next! one two)
 	  (process-set-next! two three)
 	  (pm-attach one))))))
 
 (define* (timed-text burro-sxml-tree-inner next #:key
-		     (time-limit 4.0) x y width height)
+		     (time-limit 4.0) x y width height
+		     (fade-time 0.5))
   ;; We let the caller drop the uninteresting *TOP* node
   (let ((pango-sxml-tree
 	 `(*TOP* ,burro-sxml-tree-inner)))
@@ -84,9 +87,9 @@ actions, they are activated."
       (set-markup pango-xml-string x y width height)
 	
       ;; And now set up a script for the process manager.
-      (let ((one (fade-in-process 0.5))
+      (let ((one (fade-in-process fade-time))
 	    (two (wait-process time-limit))
-	    (three (fade-out-process 0.5))
+	    (three (fade-out-process fade-time))
 	    (four (call-procedure-process next)))
 	(process-set-next! one two)
 	(process-set-next! two three)

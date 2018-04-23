@@ -63,28 +63,70 @@
      "\n\n"
      (a (@ (action ,Six)) "Shocking"))))
 
+;; Here we set up a BG to be a "talking head", which means that the
+;; bottom of the BG is aligned with the bottom of the canvas, and that
+;; the rotation center is at the bottom-center of the BG.
+(define (bg-setup-to-bottom bg vram x)
+  (let* ((siz (get-vram-image-size vram))
+	 (img-width (car siz))
+	 (img-height (cadr siz))
+	 (img-j (- (canvas-height) img-height)))
+    (bg-setup bg vram)
+    (bg-set-position bg
+		     (+ x (/ img-width 2))
+		     (canvas-height)	; y
+		     0.0 		; rotation
+		     1.0		; expansion
+		     (/ img-width 2)	; rot center x
+		     img-height		; rot center y
+		     )))
+
+(define (bg-set-expansion bg exp)
+  (let ((pos (bg-get-position bg)))
+    
+    (bg-set-position bg
+		     (car pos)
+		     (cadr pos)
+		     (caddr pos)
+		     exp
+		     (cadddr (cdr pos))
+		     (cadddr (cddr pos)))))
+
 (define (Six)
   (load-image-file "street1.jpg" VRAM_A)
   (bg-setup BG_4 VRAM_A)
-  (load-image-file "MrWells.png" VRAM_B)
-  (let* ((siz (get-vram-image-size VRAM_B))
-	 (img-width (car siz))
-	 (img-height (cadr siz))
-	 (img-i 0)
-	 (img-j (- (canvas-height) img-height)))
-    (log-info "width ~A height ~A i ~A j ~A" img-width img-height img-i img-j)
-    (bg-setup BG_3 VRAM_B)
-    (bg-set-position BG_3 img-i img-j))
+  (load-image-file "MrWells.png" VRAM_E)
+  (bg-setup-to-bottom BG_3 VRAM_E 0)
   (set-markup-bgcolor "dim gray" 0.8)
   (set-font-color "alice blue")
-  (timed-text
-   '(markup
-     (u "Mr Wells:")
-     "\n\tThis is placeholder text that Mr Wells is saying.")
-   (lambda () #f)
-   #:time-limit 50
-   #:y 330 #:x 70 #:width 500))
+  (clickable-text
+   `(markup
+     (i "Mr Wells:")
+     "\n\tThis is placeholder text that Mr Wells is "
+     (a (@ (action ,Seven)) "saying"))
+   #:y 330 #:x 70 #:width 500 #:fade-time 0))
    
+
+(define (Seven)
+  (load-image-file "TheNurse.png" VRAM_F)
+  (bg-set-expansion BG_3 0.9)
+  (bg-setup-to-bottom BG_2 VRAM_F 300)
+  (clickable-text
+   `(markup
+     (i "Nurse:")
+     "\n\tNo, I'm sure you're not well at "
+     (a (@ (action ,Eight)) "all"))
+   #:y 330 #:x 70 #:width 500 #:fade-time 0))
+
+(define (Eight)
+  (bg-set-expansion BG_3 1.0)
+  (bg-set-expansion BG_2 0.9)
+  (clickable-text
+   `(markup
+     (i "Mr Wells:")
+     "\n\tFacts are facts.  There is no need for faith at "
+     (a (@ (action ,One)) "all"))
+   #:y 330 #:x 70 #:width 500 #:fade-time 0))
 
 (Six)
 

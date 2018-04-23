@@ -122,10 +122,16 @@ static void compute_transform (cairo_matrix_t *matrix,
     xy = expansion_factor * sn;
     yx = -xy;
     yy = xx;
-    x0 = (rotation_center_screen_x
+    /* x0 = (rotation_center_screen_x */
+    /*       - (xx * (double)rotation_center_bitmap_column */
+    /*          + xy * (double) rotation_center_bitmap_row)); */
+    /* y0 = (rotation_center_screen_y */
+    /*       - (yx * (double)rotation_center_bitmap_column */
+    /*          + yy * (double) rotation_center_bitmap_row)); */
+    y0 = (rotation_center_screen_y
           - (xx * (double)rotation_center_bitmap_column
              + xy * (double) rotation_center_bitmap_row));
-    y0 = (rotation_center_screen_y
+    x0 = (rotation_center_screen_x
           - (yx * (double)rotation_center_bitmap_column
              + yy * (double) rotation_center_bitmap_row));
     matrix->xx = xx;
@@ -625,8 +631,8 @@ canvas_xy_to_index (BurroCanvas *canvas,
 {
     gboolean ret;
 
-    x -= CANVAS_MARGIN;
-    y -= CANVAS_MARGIN;
+    x -= canvas->layout_x;
+    y -= canvas->layout_y;
     x *=  PANGO_SCALE;
     y *=  PANGO_SCALE;
     ret = pango_layout_xy_to_index (canvas->layout, x, y, index, trailing);
