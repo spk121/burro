@@ -6,7 +6,11 @@
 
 #include <gtk/gtk.h>
 
+#ifdef _WIN32 
+#define __maybe_unused
+#else
 #define __maybe_unused __attribute__((unused))
+#endif
 
 struct _BurroApp
 {

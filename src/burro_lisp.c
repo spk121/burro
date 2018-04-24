@@ -5,7 +5,7 @@
 #include "burro_journal.h"
 #include "canvas.h"
 #include "canvas_vram.h"
-
+#include <libguile.h>
 /* In this module a couple of things happen.
 
    1. We create a "burro engine" module, which has all of the
@@ -28,7 +28,9 @@
    new sandbox.
 */
 
-#define __maybe_unused __attribute__((unused))
+
+//#define __maybe_unused __attribute__((unused))
+#define __maybe_unused
 
 static void add_site_dir_to_load_path();
 static SCM add_to_load_path (void *path);
@@ -66,6 +68,14 @@ add_site_dir_to_load_path()
     SCM ret;
     
     /* Add Burro's data directory to the load path. */
+#ifndef RELEASE
+scm_c_catch(SCM_BOOL_T,
+        add_to_load_path, ".",
+        default_error_handler,
+        NULL,
+        NULL, NULL);
+#endif
+
 #ifdef GUILESITEDIR
     guilesitedir = g_locale_to_utf8 (GUILESITEDIR, -1, NULL, NULL, NULL);
     if (!guilesitedir)

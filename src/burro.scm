@@ -24,7 +24,8 @@
   #:use-module (burro debug)
   #:use-module (ice-9 sandbox)
   #:re-export (clickable-text
-	       timed-text)
+	       timed-text
+	       wait-on-click-text)
   #:export (make-sandbox
 	    load-file-into-sandbox
 	    eval-string-in-sandbox
@@ -40,7 +41,8 @@
 
     ((burro drivers)
      clickable-text
-     timed-text)
+     timed-text
+     wait-on-click-text)
 
     ((burro pm)
      pm-info)

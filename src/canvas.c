@@ -211,7 +211,7 @@ static void draw_textbox(guint32 bgcolor)
             int height = ink_extents.height / PANGO_SCALE;
             cairo_set_source_rgba(canvas_cur->context, r, g, b, a);
             cairo_set_line_width(canvas_cur->context, 1);
-#define LAYOUT_MARGIN 5
+#define LAYOUT_MARGIN 15
             cairo_rectangle(canvas_cur->context,
                             canvas_cur->layout_x - LAYOUT_MARGIN,
                             canvas_cur->layout_y - LAYOUT_MARGIN,

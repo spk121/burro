@@ -6,11 +6,13 @@
   #:use-module (burro process fade)
   #:use-module (burro process text-click)
   #:use-module (burro process wait)
+  #:use-module (burro process wait-on-click)
   #:use-module (burro xml)
   #:use-module (srfi srfi-1)
   #:use-module (sxml simple)
   #:export (clickable-text
-	    timed-text))
+	    timed-text
+	    wait-on-click-text))
 
 (define (find-action actions index)
   "Searches in the action list for an entry that is active for index."
@@ -76,6 +78,27 @@ actions, they are activated."
 	  (pm-attach one))))))
 
 (define* (timed-text burro-sxml-tree-inner next #:key
+		     (time-limit 4.0) x y width height
+		     (fade-time 0.5))
+  ;; We let the caller drop the uninteresting *TOP* node
+  (let ((pango-sxml-tree
+	 `(*TOP* ,burro-sxml-tree-inner)))
+    (let ((pango-xml-string
+	   (with-output-to-string
+	     (lambda () (sxml->xml pango-sxml-tree)))))
+      (set-markup pango-xml-string x y width height)
+	
+      ;; And now set up a script for the process manager.
+      (let ((one (fade-in-process fade-time))
+	    (two (wait-process time-limit))
+	    (three (fade-out-process fade-time))
+	    (four (call-procedure-process next)))
+	(process-set-next! one two)
+	(process-set-next! two three)
+	(process-set-next! three four)
+	(pm-attach one)))))
+
+(define* (wait-on-click-text burro-sxml-tree-inner next #:key
 		     (time-limit 4.0) x y width height
 		     (fade-time 0.5))
   ;; We let the caller drop the uninteresting *TOP* node

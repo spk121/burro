@@ -42,6 +42,7 @@
  */
 
 #define _GNU_SOURCE
+#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

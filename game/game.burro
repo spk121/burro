@@ -6,7 +6,7 @@
   (set-font-color "dark slate gray")
   (timed-text 
    `(markup
-     (big (b "NOT SO LONG AGO")))
+     (big (b "FANCY FREE")))
    Two
    #:time-limit 5 #:y (/ (canvas-height) 2) #:x (/ (canvas-width) 2)))
 
@@ -16,7 +16,7 @@
   (bg-setup BG_1 VRAM_A)
   ;;(bg-set-brightness 0.4)
   (timed-text
-   '(markup "")
+   '(markup "A Lonely Cactus Production")
    Three
    #:time-limit 5))
 
@@ -25,9 +25,9 @@
   (timed-text
    `(markup
      (span (@ (font "Serif") (variant "smallcaps"))
-	   "Copyright, 1927, by\nHardcourt, Brice and Company, Inc")
+	   "Adapted from 'Fancy Free' (1911) by William Stanley Houghton")
      "\n\n"
-     (small (i ,(string-append "This book is complete and unabridged.  It is "
+     (small (i ,(string-append "This work is complete and unabridged.  It is "
 		       "manufactured under wartime conditions in "
 		       "conformity with all government regulations "
 		       "controlling all use of paper and other "
@@ -47,21 +47,22 @@
      "PART ONE\n\n"
      
      (b "Life's but\n\na waking shadow"))
-   Five
+   Six
    #:time-limit 6
    #:y (/ (canvas-height) 3) #:x 70))
    
-(define (Five)
-  (set-font "Serif")
-  (clickable-text
-   `(markup
-     "Spring had come at last. It was 1896, and modern-minded young men "
-     "were eagerly pursuing the happiness on wheels.  The bicycle craze "
-     "has swept the country.  Old-fashioned folk deplored it.  Eminent "
-     "clergymen railed against it, but, even the highest circles of fashion "
-     "had succomed to this vogue."
-     "\n\n"
-     (a (@ (action ,Six)) "Shocking"))))
+;; (define (Five)
+;;   (set-font "Serif")
+;;   (clickable-text
+;;    `(markup
+;;      "Spring had come at last. It was 1896, and modern-minded young men "
+;;      "were eagerly pursuing the happiness on wheels.  The bicycle craze "
+;;      "has swept the country.  Old-fashioned folk deplored it.  Eminent "
+;;      "clergymen railed against it, but, even the highest circles of fashion "
+;;      "had succomed to this vogue."
+;;      "\n\n"
+;;      (a (@ (action ,Six)) "Shocking"))))
+
 
 ;; Here we set up a BG to be a "talking head", which means that the
 ;; bottom of the BG is aligned with the bottom of the canvas, and that
@@ -92,41 +93,110 @@
 		     (cadddr (cdr pos))
 		     (cadddr (cddr pos)))))
 
-(define (Six)
-  (load-image-file "street1.jpg" VRAM_A)
-  (bg-setup BG_4 VRAM_A)
-  (load-image-file "MrWells.png" VRAM_E)
-  (bg-setup-to-bottom BG_3 VRAM_E 0)
+(define (Fancy-enters-center)
+  (load-image-file "TheNurse.png" VRAM_E)
+  (bg-setup-to-bottom BG_2 VRAM_E 200)
+  (bg-set-expansion BG_2 0.9))
+
+(define (Fancy-speaks)
+  (bg-set-expansion BG_1 0.9)
+  (bg-set-expansion BG_2 1.0)
+  (bg-set-expansion BG_3 0.9))
+
+(define (Fancy-leaves)
+  (bg-hide BG_2))
+
+(define (Ethelbert-enters-center)
+  (load-image-file "MrWells.png" VRAM_F)
+  (bg-setup-to-bottom BG_3 VRAM_F 210)
+  (bg-set-expansion BG_3 0.9))
+
+(define (Ethelbert-speaks)
+  (bg-set-expansion BG_1 0.9)
+  (bg-set-expansion BG_2 0.9)
+  (bg-set-expansion BG_3 1.0))
+
+(define (Ethelbert-leaves)
+  (bg-hide BG_3))
+
+(define (You-speak)
+  (bg-set-expansion BG_1 0.9)
+  (bg-set-expansion BG_2 0.9)
+  (bg-set-expansion BG_3 0.9))
+
+(define (setup-speech-text)
+  (set-font "Serif 16")
   (set-markup-bgcolor "dim gray" 0.8)
-  (set-font-color "alice blue")
+  (set-font-color "alice blue"))
+
+(define (In-the-library)
+  (load-image-file "library.jpg" VRAM_A)
+  (bg-setup BG_4 VRAM_A))
+  
+(define (Six)
+  (In-the-library)
+  (Fancy-enters-center)
+  (setup-speech-text)
+  (You-speak)
   (clickable-text
    `(markup
-     (i "Mr Wells:")
-     "\n\tThis is placeholder text that Mr Wells is "
-     (a (@ (action ,Seven)) "saying"))
+     (i "You:")
+     "\n\tThe last post is a midnight. It is now "
+     (a (@ (action ,Seven)) "quarter-past ten."))
    #:y 330 #:x 70 #:width 500 #:fade-time 0))
    
 
 (define (Seven)
-  (load-image-file "TheNurse.png" VRAM_F)
-  (bg-set-expansion BG_3 0.9)
-  (bg-setup-to-bottom BG_2 VRAM_F 300)
-  (clickable-text
+  (Fancy-speaks)
+  (wait-on-click-text
    `(markup
-     (i "Nurse:")
-     "\n\tNo, I'm sure you're not well at "
-     (a (@ (action ,Eight)) "all"))
+     (i "Fancy:")
+     "\n\tThen I have still and hour and three-quarters in which to "
+     "finish the letter.  This is no ordinary letter.")
+   Eight
    #:y 330 #:x 70 #:width 500 #:fade-time 0))
 
 (define (Eight)
-  (bg-set-expansion BG_3 1.0)
-  (bg-set-expansion BG_2 0.9)
+  (You-speak)
   (clickable-text
    `(markup
-     (i "Mr Wells:")
-     "\n\tFacts are facts.  There is no need for faith at "
-     (a (@ (action ,One)) "all"))
+     (i "You:")
+     "\n\tIt ought not be so difficult to tell one's husband that one has "
+     (a (@ (action ,Nine)) "run away from him."))
    #:y 330 #:x 70 #:width 500 #:fade-time 0))
+
+(define (Fancy-speaks-text proc . text)
+  (Fancy-speaks)
+  (wait-on-click-text
+   (append
+    (list 'markup
+	  (list 'i "Fancy:")
+	  "\n\t")
+    text)
+   proc
+   #:y 330 #:x 70 #:width 500 #:fade-time 0.1))
+
+(define (You-speak-text . text)
+  (You-speak)
+  (clickable-text
+   (append
+    (list 'markup
+	  (list 'i "You:")
+	  "\n\t")
+    text)
+   #:y 330 #:x 70 #:width 500 #:fade-time 0))
+
+(define (Nine)
+  (Fancy-speaks-text
+   Ten
+   "But I have had so little experience.  I daresay I shall improve "
+   "with practice."))
+
+(define (Ten)
+  (You-speak-text `(a (@ (action ,Eleven)) "How far have you got?")))
+
+(define (Eleven)
+  #f)
 
 (Six)
 
