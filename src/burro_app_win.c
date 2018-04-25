@@ -148,6 +148,7 @@ action_view_tools (GSimpleAction *simple __maybe_unused,
     if (!window->debug_window)
     {
         window->debug_window = burro_debug_window_new(window);
+        gtk_window_set_destroy_with_parent (GTK_WINDOW(window->debug_window), TRUE);
         g_signal_connect(window->debug_window,
                          "start-requested",
                          G_CALLBACK(signal_start_requested),

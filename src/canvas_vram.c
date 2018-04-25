@@ -238,6 +238,9 @@ vram_info_list_store_update(GtkListStore *list_store)
     gint i;
     const char *nullstr = "";
 
+    if (!list_store)
+        return;
+    
     for (i = VRAM_A; i < VRAM_COUNT; i ++)
     {
         path = gtk_tree_path_new_from_indices (i - VRAM_A, -1);

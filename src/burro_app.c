@@ -5,6 +5,7 @@
 #include "burro_resources.h"
 
 #include <gtk/gtk.h>
+#include <libguile.h>
 
 #ifdef _WIN32 
 #define __maybe_unused
@@ -48,16 +49,33 @@ action_about (GSimpleAction *action __maybe_unused,
                            NULL);
 }
 
+static void *
+app_quit_guard (void * app)
+{
+    g_usleep(1);
+    g_application_quit (G_APPLICATION (app));
+    return NULL;
+}
+
 static void
 action_quit (GSimpleAction *action __maybe_unused,
              GVariant *parameter __maybe_unused,
              gpointer app)
 {
     GList *windows;
+    scm_gc();
+    g_usleep(1000);
 
+loop: 
     windows = gtk_application_get_windows (GTK_APPLICATION (app));
-    g_list_foreach (windows, (GFunc) gtk_widget_destroy, NULL);
-    g_application_quit (G_APPLICATION (app));
+    if (windows && windows->data)
+    {
+        gtk_widget_destroy (windows->data);
+        goto loop;
+    }
+    scm_without_guile (app_quit_guard, app);
+    scm_gc();
+    g_usleep(1000);
 }
 
 static GActionEntry app_entries[] =
