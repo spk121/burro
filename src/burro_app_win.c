@@ -451,17 +451,17 @@ game_loop (gpointer user_data)
                 }
             }
             else /* We are running too fast. */
-                usleep(1000);
+                g_usleep(1000);
         }
         else /* ! active */
         {
-            usleep (1000);
+            g_usleep (1000);
             // audio pause
             // sleep until next event
         }
     }
     else /* minimized */
-        usleep (1000);
+        g_usleep (1000);
 
     return TRUE;
 }
@@ -476,9 +476,6 @@ timeout_action_destroy (gpointer data __maybe_unused)
 static void
 burro_app_window_init (BurroAppWindow *win)
 {
-    GtkBuilder *builder;
-    GMenuModel *menu;
-
     // We temporarily construct a canvas so that the canvas class is
     // ready to go before calling builder.
     BurroCanvas *tmp = burro_canvas_new();
@@ -491,12 +488,6 @@ burro_app_window_init (BurroAppWindow *win)
     g_action_map_add_action_entries (G_ACTION_MAP (win),
                                      win_entries, G_N_ELEMENTS (win_entries),
                                      win);
-
-    // builder = gtk_builder_new_from_resource ("/com/lonelycactus/burroengine/gears-menu.ui");
-
-    // menu = G_MENU_MODEL (gtk_builder_get_object (builder, "menu"));
-    // gtk_menu_button_set_menu_model (GTK_MENU_BUTTON (win->gears), menu);
-    // g_object_unref (builder);
 
     GtkAccelGroup *accel = gtk_accel_group_new();
     GClosure *cl_view = g_cclosure_new(G_CALLBACK(accel_action_view_tools),

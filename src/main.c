@@ -8,6 +8,10 @@
 int
 main (int argc, char *argv[])
 {
+    // This might quiet DBUS errors about Error retrieving
+    // accessibility bus address
+    g_setenv("NO_AT_BRIDGE", "1", FALSE);
+    
     setlocale (LC_ALL, "");
     
     extern void scm_c_set_default_vm_engine_x (int x);

@@ -48,7 +48,7 @@ DLL_LOCAL void canvas_bg_init (void);
 DLL_LOCAL cairo_surface_t *canvas_bg_get_cairo_surface (int id);
 DLL_LOCAL gboolean canvas_bg_is_shown (int id);
 DLL_LOCAL gboolean canvas_bg_is_dirty (int id);
-DLL_PUBLIC void canvas_bg_set_clean (int z);
+void canvas_bg_set_clean (int z);
 DLL_LOCAL void canvas_bg_get_transform (int id, double *scroll_x, double *scroll_y,
                        double *rotation_center_x, double *rotation_center_y,
                        double *rotation, double *expansion);

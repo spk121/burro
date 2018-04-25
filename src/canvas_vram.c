@@ -1,6 +1,3 @@
-#include "canvas_vram.h"
-#include "canvas_lib.h"
-
 /*  vram.c
 
     Copyright (C) 2018   Michael L. Gran
@@ -184,7 +181,7 @@ canvas_vram_set_path (const char *path)
     free (vram_path);
     vram_path = NULL;
     if (path)
-        vram_path = strdup(path);
+        vram_path = g_strdup(path);
 }
 
 static char *vram_size_string(int i)
@@ -375,7 +372,7 @@ set_vram_to_pixbuf_from_image_file (int vram_index, const char *filename)
     if (vram_path)
         pathname = g_build_filename (vram_path, filename, NULL);
     else
-        pathname = strdup(filename);
+        pathname = g_strdup(filename);
     GdkPixbuf *pb = xgdk_pixbuf_new_from_file (pathname);
     g_free (pathname);
     if (pb == NULL)
@@ -640,7 +637,7 @@ of supported formats.")
     if (vram_path)
         pathname = g_build_filename (vram_path, path, NULL);
     else
-        pathname = strdup(path);
+        pathname = g_strdup(path);
     
     GFile *f = g_file_new_for_path (pathname);
     g_free (pathname);

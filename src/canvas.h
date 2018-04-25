@@ -17,11 +17,11 @@ G_DECLARE_FINAL_TYPE (BurroCanvas, burro_canvas, BURRO, CANVAS, GtkDrawingArea)
 #define CANVAS_MARGIN 50
 
 #define CANVAS_ZLEVEL_COUNT 4
-DLL_PUBLIC BurroCanvas *burro_canvas_new ();
+BurroCanvas *burro_canvas_new ();
 
-DLL_PUBLIC gboolean     canvas_xy_to_index (BurroCanvas *canvas, double x, double y, int *index, int *trailing);
+gboolean     canvas_xy_to_index (BurroCanvas *canvas, double x, double y, int *index, int *trailing);
 
-DLL_PUBLIC void         canvas_init_guile_procedures ();
+void         canvas_init_guile_procedures ();
 
 cairo_t * get_canvas_context_cur();
 

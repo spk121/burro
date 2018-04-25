@@ -10,7 +10,7 @@
 
 DLL_LOCAL void canvas_audio_init ();
 DLL_LOCAL void canvas_audio_fini ();
-DLL_PUBLIC int canvas_audio_iterate();
+int canvas_audio_iterate();
 DLL_LOCAL void canvas_audio_init_guile_procedures ();
 bool am_is_playing();
 void am_update(int n);

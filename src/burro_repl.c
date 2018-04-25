@@ -2,6 +2,9 @@
 // #include "burro_config_keys.h"
 #include "burro_repl.h"
 
+static void burro_repl_dispose (GObject *object);
+static void burro_repl_finalize (GObject *object);
+
 static SCM
 eval_string_catch_handler (const char *string, SCM key, SCM args)
 {
@@ -96,7 +99,11 @@ repl_tick (BurroRepl *repl)
 static void
 burro_repl_class_init (BurroReplClass *class)
 {
+    GObjectClass *gclass = G_OBJECT_CLASS(class);
 
+    gclass->dispose = burro_repl_dispose;
+    gclass->finalize = burro_repl_finalize;
+    
 }
 
 static void

@@ -155,7 +155,7 @@ default_error_handler (void *data __maybe_unused,
   
     /* char **err_string = (char **) data; */
     char *c_key;
-    SCM subr, message, args, rest;
+    SCM subr, message, args;
     SCM message_args, formatted_message;
 
     /* Key is the exception type, a symbol. */
@@ -176,7 +176,6 @@ default_error_handler (void *data __maybe_unused,
         subr = scm_list_ref (vals, scm_from_int (0));
         message = scm_list_ref (vals, scm_from_int (1));
         args = scm_list_ref (vals, scm_from_int (2));
-        rest = scm_list_ref (vals, scm_from_int (3));
 
         message_args = scm_simple_format (SCM_BOOL_F, message, args);
 

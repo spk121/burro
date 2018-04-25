@@ -937,7 +937,8 @@ console_render_to_cairo_surface ()
     uint32_t *data;
     int stride;
 
-    int glyph_bpd, glyph_stride, glyph_width, glyph_height, glyph_xoffset, glyph_yoffset;
+    int glyph_bpd, glyph_stride, glyph_width, glyph_height = 13;
+    int glyph_xoffset, glyph_yoffset;
     uint8_t *glyph_bitmap;
 
     /* Convert time to integer milliseconds */
