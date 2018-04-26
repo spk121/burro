@@ -5,6 +5,7 @@
 #ifndef VISIBILITY_H
 #define VISIBILITY_H
 
+#if 0
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef DLL_EXPORT
     #ifdef __GNUC__
@@ -29,7 +30,10 @@
     #define DLL_LOCAL
   #endif
 #endif
+#endif
 
+#define DLL_PUBLIC
+#define DLL_LOCAL
 
 
 #endif
