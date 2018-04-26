@@ -303,7 +303,7 @@ static SCM
 call_pm_set_mouse_move (void *_win)
 {
     BurroAppWindow *win = BURRO_APP_WINDOW (_win);
-    
+
     scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-move"),
                 scm_from_double (win->mouse_move_x),
                 scm_from_double (win->mouse_move_y));
@@ -314,7 +314,7 @@ static SCM
 call_pm_set_mouse_click (void *_win)
 {
     BurroAppWindow *win = BURRO_APP_WINDOW (_win);
-    
+
     scm_call_2 (scm_c_public_ref ("burro pm", "pm-set-mouse-click"),
                 scm_from_double (win->mouse_click_x),
                 scm_from_double (win->mouse_click_y));
@@ -347,15 +347,18 @@ call_pm_update (void *_pdt)
                 scm_from_double(*pdt));
     return SCM_BOOL_T;
 }
-                
+
 
 static gboolean
 game_loop (gpointer user_data)
 {
-    BurroAppWindow *win = BURRO_APP_WINDOW (user_data);
+    if (g_source_is_destroyed (g_main_current_source()))
+        return FALSE;
 
+    BurroAppWindow *win = BURRO_APP_WINDOW (user_data);
     if (win->game_loop_quitting)
         return FALSE;
+
 
     if (!win->minimized_flag)
     {
@@ -511,7 +514,7 @@ burro_app_window_init (BurroAppWindow *win)
 
     // FIXME: how to do this properly
     // Really shrink the window down to minimal
-#if 0    
+#if 0
     gtk_window_resize (GTK_WINDOW(win),
                        CANVAS_WIDTH + 2 * CANVAS_MARGIN,
                        CANVAS_HEIGHT + 2 * CANVAS_MARGIN);
@@ -597,6 +600,11 @@ burro_app_window_dispose (GObject *object)
     win = BURRO_APP_WINDOW (object);
 
     win->game_loop_quitting = TRUE;
+    if (win->game_loop_callback_id)
+    {
+        g_source_remove (win->game_loop_callback_id);
+        win->game_loop_callback_id = 0;
+    }
 
     if (win->canvas)
     {
@@ -642,7 +650,7 @@ burro_app_window_open (BurroAppWindow *win,
     char *err_string;
     char *full;
     char *dir;
-    
+
     if (file)
     {
         full = g_file_get_path (file);
@@ -652,7 +660,7 @@ burro_app_window_open (BurroAppWindow *win,
         g_free (full);
         full = NULL;
     }
-    
+
     win->sandbox = burro_make_sandbox (file, &err_string);
     if (file)
     {
