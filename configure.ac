@@ -18,23 +18,38 @@ GLIB_GSETTINGS
 
 AC_CONFIG_HEADERS([config.h])
 
+AC_DEFINE_UNQUOTED([HOST_TYPE], ["$host"],
+  [Define to the host's GNU triplet.])
+case $host in
+  *-*-mingw*)
+     AC_DEFINE([HAVE_WINCOREAUDIO], [1],
+                                    [Define if you have Windows Core Audio])
+    ;;
+    *)
+	PKG_CHECK_MODULES([LIBPULSE], [libpulse],
+                          [AC_DEFINE([HAVE_LIBPULSE], [1],
+                                     [Define if you have Pulseaudio's libpulse])])
+				     ;;
+esac
+
+
 # Checks for libraries
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GTK3],[gtk+-3.0 gio-2.0 glib-2.0])
 PKG_CHECK_MODULES([VORBISFILE],[vorbisfile])
 
-AC_ARG_WITH([libpulse],
-            [AS_HELP_STRING([--with-pulseaudio],
-                            [enable support for pulseaudio])],
-            [with_libpulse=yes],
-            [with_libpulse=no])
-          
-LIBPULSE=
-AS_IF([test "x$with_libpulse" = xyes],
-      [PKG_CHECK_MODULES([LIBPULSE], [libpulse],
-                         [AC_DEFINE([HAVE_LIBPULSE], [1],
-                                    [Define if you have Pulseaudio's libpulse])],
-                         [AC_MSG_FAILURE([--with-pulseaudio was given, but test for Pulseaudio's libpulse failed])])])
+dnl AC_ARG_WITH([libpulse],
+dnl             [AS_HELP_STRING([--with-pulseaudio],
+dnl                             [enable support for pulseaudio])],
+dnl             [with_libpulse=yes],
+dnl             [with_libpulse=no])
+
+dnl LIBPULSE=
+dnl AS_IF([test "x$with_libpulse" = xyes],
+dnl       [PKG_CHECK_MODULES([LIBPULSE], [libpulse],
+dnl                          [AC_DEFINE([HAVE_LIBPULSE], [1],
+dnl                                     [Define if you have Pulseaudio's libpulse])],
+dnl                          [AC_MSG_FAILURE([--with-pulseaudio was given, but test for Pulseaudio's libpulse failed])])])
 ################################################################
 # Guile support details
 GUILE_PKG([2.2])
@@ -104,4 +119,3 @@ AC_CONFIG_FILES([
 AC_CONFIG_FILES([src/uninstalled-env], [chmod +x src/uninstalled-env])
 AC_OUTPUT
 AC_SUBST([guilesitedir])
-
