@@ -106,6 +106,7 @@ AC_CONFIG_FILES([
  Makefile
  src/Makefile
  test/Makefile
+ game/Makefile
  data/Makefile
  data/icons/Makefile
  data/icons/hicolor/Makefile

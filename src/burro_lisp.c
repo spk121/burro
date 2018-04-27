@@ -38,13 +38,12 @@ static void create_burro_engine_module();
 static SCM scm_init_burro_engine_module (void *data);
 static void init_burro_engine (void *unused);
 
-
 SCM burro_lisp_new ()
 {
     SCM burro_user_module = scm_c_define_module ("guile-user", NULL, NULL);
     scm_set_current_module (burro_user_module);
 
-    add_site_dir_to_load_path();
+    // add_site_dir_to_load_path();
 
     // scm_c_use_module ("ice-9 readline");
     scm_c_use_module ("ice-9 eval-string");

@@ -751,6 +751,12 @@ Set the title in titlebar of the main window.")
     return SCM_UNSPECIFIED;
 }
 
+SCM_DEFINE (G_burro_stop, "stop", 0, 0, 0, (void), "\
+quit the program")
+{
+    gtk_main_quit();
+}
+
 void
 burro_app_win_init_guile_procedures ()
 {
@@ -759,6 +765,7 @@ burro_app_win_init_guile_procedures ()
 #endif
     scm_c_export ("get-sandbox",
                   "set-title",
+                  "stop",
                   NULL);
 }
 

@@ -50,6 +50,7 @@
      ;; From Burro
      set-title
      debug-peek-append
+     stop
      ;; receive-clock-tick
      ;; register-game-loop-handler
      ;; From Canvas

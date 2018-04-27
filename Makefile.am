@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = --install -I m4
-SUBDIRS = src data test
+SUBDIRS = src data test game
 
 MAINTAINERCLEANFILES = \
  $(srcdir)/compile \
