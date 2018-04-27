@@ -19,6 +19,20 @@ main (int argc, char *argv[])
     scm_c_set_default_vm_engine_x (1);
 
 #ifdef RELATIVE_PATHS
+#ifdef __MINGW32__
+    // Set up a relative path to Guile's own scheme sources,
+    // and our site directory sources.
+    g_setenv("GUILE_LOAD_PATH", "share/guile/2.2;share/guile/site/2.2", TRUE);
+
+    // Set up a relative path to Guile's compiled sources and
+    // our compiled site sources.
+    g_setenv("GUILE_LOAD_COMPILED_PATH",
+             "lib/guile/2.2/ccache;lib/guile/2.2/site-ccache", TRUE);
+
+    // Set up the path to where on-the-fly compilation gets saved.
+    // ('guile/ccache/VERSION' gets appended to this directory)
+    g_setenv("XDG_CACHE_HOME", "lib", TRUE);
+#else
     // Set up a relative path to Guile's own scheme sources,
     // and our site directory sources.
     g_setenv("GUILE_LOAD_PATH", "share/guile/2.2:share/guile/site/2.2", TRUE);
@@ -31,6 +45,7 @@ main (int argc, char *argv[])
     // Set up the path to where on-the-fly compilation gets saved.
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
+#endif
 #endif
     
     scm_init_guile ();
