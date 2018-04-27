@@ -152,5 +152,6 @@ dist_burroprocessguilesite_DATA = \
  burro/process/call-procedure.scm \
  burro/process/fade.scm \
  burro/process/text-click.scm \
+ burro/process/wait-on-click.scm \
  burro/process/wait.scm
 
