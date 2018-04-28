@@ -12,7 +12,7 @@
 
 (define (Two)
   (set-backdrop "AntiqueWhite3")
-  (load-image-file "bike1.jpg" VRAM_A)
+  (load-image-file "bike1.png" VRAM_A)
   (bg-setup BG_1 VRAM_A)
   ;;(bg-set-brightness 0.4)
   (timed-text
@@ -130,7 +130,7 @@
   (set-font-color "alice blue"))
 
 (define (In-the-library)
-  (load-image-file "library.jpg" VRAM_A)
+  (load-image-file "library.png" VRAM_A)
   (bg-setup BG_4 VRAM_A))
   
 (define (Six)

@@ -2,15 +2,15 @@ dist_pkgdata_DATA = \
  cache.burro \
  game.burro \
  FancyDan.png \
- library.jpg \
+ library.png \
  MrsWestfalia.png \
  MrWells.png \
- room.jpg \
- ruin.jpg \
- shop.jpg \
- shop2.jpg \
- street1.jpg \
- street2.jpg \
- streetcars.jpg \
+ room.png \
+ ruin.png \
+ shop.png \
+ shop2.png \
+ street1.png \
+ street2.png \
+ streetcars.png \
  TheNurse.png \
  village.png
