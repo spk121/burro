@@ -35,6 +35,13 @@ main (int argc, char *argv[])
     // Set up the path to where on-the-fly compilation gets saved.
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
+    if (argc < 2)
+    {
+        // FIXME: memleak
+        _argv = malloc(sizeof(char *) * 2);
+        _argv[0] = g_strdup(argv[0]);
+        _argv[1] = g_strdup("share\\burro-engine\\game.burro");
+    }
 #else
     // Set up a relative path to Guile's own scheme sources,
     // and our site directory sources.
@@ -48,7 +55,6 @@ main (int argc, char *argv[])
     // Set up the path to where on-the-fly compilation gets saved.
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
-#endif
     if (argc < 2)
     {
         // FIXME: memleak
@@ -56,6 +62,7 @@ main (int argc, char *argv[])
         _argv[0] = g_strdup(argv[0]);
         _argv[1] = g_strdup("share/burro-engine/game.burro");
     }
+#endif
 #endif
     printf("Compiling scheme files\n");
     scm_init_guile ();
