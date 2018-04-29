@@ -111,7 +111,7 @@ actions, they are activated."
 	
       ;; And now set up a script for the process manager.
       (let ((one (fade-in-process fade-time))
-	    (two (wait-process time-limit))
+	    (two (wait-on-click-process))
 	    (three (fade-out-process fade-time))
 	    (four (call-procedure-process next)))
 	(process-set-next! one two)

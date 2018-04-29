@@ -31,11 +31,17 @@
 	    eval-string-in-sandbox
 	    call-with-limits))
 
+(set! *random-state* (random-state-from-platform))
+
 (define sandbox-bindings
-  '(((burro debug)
+  '(((guile)
+     random
+     random:normal)
+
+    ((burro debug)
      log-info
      Format)
-  
+
     ((burro colors)
      color)
 
@@ -203,4 +209,3 @@ the error."
    (call-with-time-and-allocation-limits 0.1 #e10e6
 					(lambda ()
 					  (apply proc args)))))
-

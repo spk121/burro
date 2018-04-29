@@ -98,9 +98,9 @@ static void draw_backdrop_color ()
         r = b;
         b = tmp;
     }
-    r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0); 
-    g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0); 
-    b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0); 
+    r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0);
+    g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0);
+    b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0);
     cairo_set_source_rgb (canvas_cur->context, r, g, b);
     cairo_paint (canvas_cur->context);
 }
@@ -200,9 +200,9 @@ static void draw_textbox(guint32 bgcolor)
             r = b;
             b = tmp;
         }
-        r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0); 
-        g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0); 
-        b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0); 
+        r = CLAMP(r * canvas_cur->brightness, 0.0, 1.0);
+        g = CLAMP(g * canvas_cur->brightness, 0.0, 1.0);
+        b = CLAMP(b * canvas_cur->brightness, 0.0, 1.0);
         if (i == 0 && bgcolor)
         {
             PangoRectangle ink_extents;
@@ -219,7 +219,7 @@ static void draw_textbox(guint32 bgcolor)
                             height + 2 * LAYOUT_MARGIN);
 #undef LAYOUT_MARGIN
             cairo_stroke_preserve(canvas_cur->context);
-            cairo_fill(canvas_cur->context);        
+            cairo_fill(canvas_cur->context);
         }
         else
         {
@@ -295,7 +295,7 @@ burro_canvas_init (BurroCanvas *win)
 
     // Set up the background
     canvas_bg_init ();
-    
+
     // Set up the text drawing
     win->layout = pango_cairo_create_layout (win->context);
     win->layout_flag = FALSE;
@@ -316,7 +316,7 @@ burro_canvas_init (BurroCanvas *win)
     pango_layout_set_width (win->layout, win->layout_width * PANGO_SCALE);
     pango_layout_set_height (win->layout, win->layout_height * PANGO_SCALE);
     pango_layout_set_wrap (win->layout, PANGO_WRAP_WORD_CHAR);
-    
+
     win->tick_cb_id = gtk_widget_add_tick_callback (GTK_WIDGET(win),
                                                     tick_cb,
                                                     NULL,
@@ -324,7 +324,7 @@ burro_canvas_init (BurroCanvas *win)
 
     // Start up the audio engine
     canvas_audio_init();
-    
+
     win->dirty = TRUE;
     canvas_cur = win;
 }
@@ -346,7 +346,7 @@ canvas_dispose (GObject *object)
 
     canvas_audio_fini();
     canvas_bg_fini();
-    
+
     win = BURRO_CANVAS (object);
     if (win->tick_cb_id > 0)
     {
@@ -361,7 +361,7 @@ canvas_dispose (GObject *object)
         cairo_destroy (win->context);
         win->context = NULL;
     }
-    
+
     if (win->surface)
     {
         unsigned int rc = cairo_surface_get_reference_count (win->surface);
@@ -384,10 +384,10 @@ burro_canvas_class_init (BurroCanvasClass *class)
 
     /* basics */
     gtkclass->draw = canvas_draw;
-    
+
     /* events */
     gtkclass->delete_event = canvas_delete;
-    
+
 }
 
 BurroCanvas *
@@ -409,7 +409,7 @@ Given a FLAG, this sets the canvas's blank parameter.  When blank is\n\
 color.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
-    
+
     if (scm_is_true(flag))
         canvas_cur->blank_flag = TRUE;
     else
@@ -431,10 +431,10 @@ SCM_DEFINE(G_canvas_set_colorswap, "set-colorswap", 1, 0, 0, (SCM flag), "\
 Given a FLAG, this sets the canvas's colorswap parameter.  When\n\
 colorswap is #t, the canvas is drawn with red and blue swapped.  When\n\
 it is #f, is is draw normally.")
-    
+
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
-    
+
     if (scm_is_true(flag))
         canvas_cur->colorswap_flag = TRUE;
     else
@@ -473,7 +473,7 @@ SCM_DEFINE(G_canvas_get_brightness, "get-brightness", 0, 0, 0, (void), "\
 Returns the canvas's brightness parameter.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
-    
+
     return scm_from_double (canvas_cur->brightness);
 }
 
@@ -500,7 +500,7 @@ Given a 32-bit RGB colorval, this sets the canvas backdrop to that color.")
     }
     else
         scm_wrong_type_arg_msg("set-backdrop", SCM_ARG1, s_color, "color name or value");
-    
+
     return SCM_UNSPECIFIED;
 }
 
@@ -508,7 +508,7 @@ SCM_DEFINE(G_canvas_get_backdrop, "get-backdrop", 0, 0, 0, (void), "\
 Returns a 32-bit RGB color, which is the canvas backdrop color.")
 {
     g_return_val_if_fail (canvas_cur != NULL, SCM_UNSPECIFIED);
-    
+
     return scm_from_uint32 (canvas_cur->backdrop);
 }
 
@@ -595,7 +595,7 @@ textbox text.")
 
     free (str);
     canvas_cur->layout_flag = TRUE;
-    
+
     canvas_cur->dirty = TRUE;
     return SCM_UNSPECIFIED;
 }
@@ -615,8 +615,31 @@ SCM_DEFINE(G_canvas_update_text_fgcolor_on_region, "update-text-fgcolor-on-regio
     PangoAttrList *attrs = pango_layout_get_attributes (canvas_cur->layout);
     PangoAttribute *fgcolor = pango_attr_foreground_new(red, green, blue);
     // FIXME: am I likely confusing UTF-8 bytes and codepoints here?
-    fgcolor->start_index = a;
-    fgcolor->end_index = b;
+
+    /* The UTF-8 index needs to be converted into UTF32 index. */
+    // fgcolor->start_index = a;
+    // fgcolor->end_index = b;
+
+    const char *str = pango_layout_get_text (canvas_cur->layout);
+    int i = 0;
+    int offset = 0;
+    while (offset < a)
+    {
+        i = g_utf8_next_char(str + i) - str;
+        offset++;
+    }
+    fgcolor->start_index = i;
+
+    i = 0;
+    offset = 0;
+    while (offset < b)
+    {
+        i = g_utf8_next_char(str + i) - str;
+        offset++;
+    }
+    fgcolor->end_index = i;
+
+
     pango_attr_list_change (attrs, fgcolor);
     pango_layout_set_attributes (canvas_cur->layout, attrs);
     // g_object_unref (attrs);
@@ -674,7 +697,7 @@ or an codepoint index otherwise.")
         i = g_utf8_next_char(str + i) - str;
         offset++;
     }
-    
+
     //return scm_list_2 (scm_from_int (offset), scm_from_int (trailing));
     return scm_from_int(offset);
 }
@@ -726,4 +749,3 @@ canvas_init_guile_procedures ()
   indent-tabs-mode:nil
   End:
 */
-

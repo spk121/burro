@@ -4,7 +4,7 @@
 (define (One)
   (set-backdrop "ghost white")
   (set-font-color "dark slate gray")
-  (timed-text 
+  (timed-text
    `(markup
      (big (b "FANCY FREE")))
    Two
@@ -35,7 +35,7 @@
      "\n\n"
      (span (@ (font "Serif") (font_variant "smallcaps"))
 	   "Printed in the U.S.A"))
-     
+
    Four
    #:time-limit 6
    #:y (/ (canvas-height) 2) #:x 70))
@@ -45,12 +45,12 @@
   (timed-text
    '(markup
      "PART ONE\n\n"
-     
+
      (b "Life's but\n\na waking shadow"))
    Six
    #:time-limit 6
    #:y (/ (canvas-height) 3) #:x 70))
-   
+
 ;; (define (Five)
 ;;   (set-font "Serif")
 ;;   (clickable-text
@@ -84,7 +84,7 @@
 
 (define (bg-set-expansion bg exp)
   (let ((pos (bg-get-position bg)))
-    
+
     (bg-set-position bg
 		     (car pos)
 		     (cadr pos)
@@ -93,50 +93,144 @@
 		     (cadddr (cdr pos))
 		     (cadddr (cddr pos)))))
 
+(define (bg-set-rotation bg exp)
+  (let ((pos (bg-get-position bg)))
+
+    (bg-set-position bg
+		     (car pos)
+		     (cadr pos)
+		     exp
+		     (cadddr pos)
+		     (cadddr (cdr pos))
+		     (cadddr (cddr pos)))))
+
+;; Dan is VRAM_D, BG_1
+
+(define (Dan-enters-center)
+  (load-image-file "FancyDan.png" VRAM_D)
+  (bg-setup-to-bottom BG_1 VRAM_D 210)
+  (bg-set-expansion BG_1 0.9))
+
+(define (Dan-speaks)
+  (bg-set-expansion BG_1 1.0)
+  (bg-set-rotation BG_1 (* 0.05 (random:normal)))
+  (bg-set-expansion BG_2 0.9)
+  (bg-set-expansion BG_3 0.9)
+  (setup-speech-text "DarkOrange4")
+  )
+
+(define (Dan-leaves)
+  (bg-hide BG_1))
+
+;; Fancy is VRAM_E, BG_2
+
 (define (Fancy-enters-center)
   (load-image-file "TheNurse.png" VRAM_E)
   (bg-setup-to-bottom BG_2 VRAM_E 200)
   (bg-set-expansion BG_2 0.9))
 
+(define (Fancy-enters-right)
+  (load-image-file "TheNurse.png" VRAM_E)
+  (bg-setup-to-bottom BG_2 VRAM_E 300)
+  (bg-set-expansion BG_2 0.9))
+
 (define (Fancy-speaks)
   (bg-set-expansion BG_1 0.9)
   (bg-set-expansion BG_2 1.0)
-  (bg-set-expansion BG_3 0.9))
+  (bg-set-rotation BG_2 (* 0.05 (random:normal)))
+  (bg-set-expansion BG_3 0.9)
+  (setup-speech-text "brown4")
+  )
 
 (define (Fancy-leaves)
   (bg-hide BG_2))
 
+;; Ethelbert is VRAM_F, BG_3
+
+
+(define (Ethelbert-enters-left)
+  (load-image-file "MrWells.png" VRAM_F)
+  (bg-setup-to-bottom BG_3 VRAM_F 0)
+  (bg-set-expansion BG_3 0.9))
+
 (define (Ethelbert-enters-center)
   (load-image-file "MrWells.png" VRAM_F)
-  (bg-setup-to-bottom BG_3 VRAM_F 210)
+  (bg-setup-to-bottom BG_3 VRAM_F 160)
   (bg-set-expansion BG_3 0.9))
 
 (define (Ethelbert-speaks)
   (bg-set-expansion BG_1 0.9)
   (bg-set-expansion BG_2 0.9)
-  (bg-set-expansion BG_3 1.0))
+  (bg-set-expansion BG_3 1.0)
+  (bg-set-rotation BG_3 (* 0.05 (random:normal)))
+  (setup-speech-text "DarkOrchid4"))
+
+(define (Ethelbert-speaks-text proc . text)
+  (Ethelbert-speaks)
+  (wait-on-click-text
+   (append
+    (list 'markup
+	  (list 'i "Ethelbert:")
+	  "\n\t")
+    text)
+   proc
+   #:y 50 #:x 70 #:width 500 #:fade-time 0.1))
 
 (define (Ethelbert-leaves)
   (bg-hide BG_3))
 
+(define (Delia-enters-left)
+  (load-image-file "MrsWestfalia.png" VRAM_C)
+  (bg-setup-to-bottom BG_1 VRAM_C 80)
+  (bg-set-expansion BG_1 0.9))
+
+(define (Delia-enters-center)
+  (load-image-file "MrsWestfalia.png" VRAM_C)
+  (bg-setup-to-bottom BG_1 VRAM_C 160)
+  (bg-set-expansion BG_3 0.9))
+
+(define (Delia-speaks)
+  (bg-set-expansion BG_1 1.0)
+  (bg-set-rotation BG_1 (* 0.05 (random:normal)))
+  (bg-set-expansion BG_2 0.9)
+  (bg-set-expansion BG_3 0.9)
+  (setup-speech-text "thistle4"))
+
+(define (Delia-speaks-text proc . text)
+  (Delia-speaks)
+  (wait-on-click-text
+   (append
+    (list 'markup
+	  (list 'i "Delia:")
+	  "\n\t")
+    text)
+   proc
+   #:y 50 #:x 70 #:width 500 #:fade-time 0.1))
+
+(define (Delia-leaves)
+  (bg-hide BG_1))
+
+
 (define (You-speak)
   (bg-set-expansion BG_1 0.9)
   (bg-set-expansion BG_2 0.9)
-  (bg-set-expansion BG_3 0.9))
+  (bg-set-rotation BG_2 0)
+  (bg-set-expansion BG_3 0.9)
+  (setup-speech-text "dim gray")
+  )
 
-(define (setup-speech-text)
+(define (setup-speech-text bgcolor)
   (set-font "Serif 16")
-  (set-markup-bgcolor "dim gray" 0.8)
+  (set-markup-bgcolor bgcolor 0.8)
   (set-font-color "alice blue"))
 
 (define (In-the-library)
   (load-image-file "library.png" VRAM_A)
   (bg-setup BG_4 VRAM_A))
-  
+
 (define (Six)
   (In-the-library)
   (Fancy-enters-center)
-  (setup-speech-text)
   (You-speak)
   (clickable-text
    `(markup
@@ -144,7 +238,7 @@
      "\n\tThe last post is a midnight. It is now "
      (a (@ (action ,Seven)) "quarter-past ten."))
    #:y 330 #:x 70 #:width 500 #:fade-time 0))
-   
+
 
 (define (Seven)
   (Fancy-speaks)
@@ -174,7 +268,7 @@
 	  "\n\t")
     text)
    proc
-   #:y 330 #:x 70 #:width 500 #:fade-time 0.1))
+   #:y 50 #:x 70 #:width 500 #:fade-time 0.1))
 
 (define (You-speak-text . text)
   (You-speak)
@@ -182,9 +276,9 @@
    (append
     (list 'markup
 	  (list 'i "You:")
-	  "\n\t")
+	  "\n")
     text)
-   #:y 330 #:x 70 #:width 500 #:fade-time 0))
+   #:y 50 #:x 70 #:width 500 #:fade-time 0))
 
 (define (Nine)
   (Fancy-speaks-text
@@ -196,7 +290,604 @@
   (You-speak-text `(a (@ (action ,Eleven)) "How far have you got?")))
 
 (define (Eleven)
-  #f)
+  (Fancy-speaks-text
+   Twelve
+   "Darling Etherbert,\n"
+   "You will be interested to hear that since you went to Scotland "
+   "on Thursday last I have decided to run away with Alfred.  You cannot "
+   "have forgotten the promise we made each other on our wedding day. "
+   "We agreed that each should be entirely free and untrammeled provided "
+   "the other's health and comfort was not interfered with. You will "
+   "understand, therefore, that in leaving you and going away with Alfred "
+   "I am doing nothing in contrary to our agreement."))
 
-(Six)
+(define (Twelve)
+  (Fancy-speaks-text
+   Thirteen
+   "That's logic, isn't it?"))
 
+(define (Thirteen)
+  (You-speak-text
+   "Yes " `(a (@ (action ,Fourteen)) "Feminine logic.")))
+
+(define (Fourteen)
+  (Fancy-speaks-text
+   Fifteen
+   "That is all Ethelbert can expect from me.\n\nHow shall I finish?"))
+
+(define (Fifteen)
+  (You-speak-text
+   "⇒ "
+   `(a (@ (action ,SixteenA)) "Yours formerly,")
+   "\n⇒ "
+   `(a (@ (action ,SixteenB))
+       "You will be glad to hear that we are having an awfully jolly time here.")
+   "\n⇒ "
+   `(a (@ (action ,SixteenC))
+       "The " (i "Cosmopolitan") " is an exceedingly nice hotel, with modern conveniences.")))
+
+(define (SixteenA)
+  (Fancy-speaks-text
+   Seventeen
+   "But I am afraid that is too abrupt.  Ethelbert is so sensitive.  I "
+   "should like to wind up with something kind."))
+
+(define (SixteenB)
+  (Fancy-speaks-text
+   Seventeen
+   "I doubt whether Ethelbert would be glad to hear it."))
+
+(define (SixteenC)
+  (Fancy-speaks-text
+   Seventeen
+   "Etherbert will hardly care for such details."))
+
+(define (Seventeen)
+  (You-speak-text
+   "Perhaps you " '(i "should") " say something about the hotel.  It is…"
+   "\n⇒ "
+   `(a (@ (action ,EighteenA)) "elaborately furnished")
+   "\n⇒ "
+   `(a (@ (action ,EighteenB)) "exceedingly expensive")))
+
+(define (EighteenA)
+  (Fancy-speaks-text
+   Nineteen
+   "I do not consider the " '(i "Cosmopolitan") " to be such a nice hotel. "
+   "The " '(i "Grand Rendevous") " would have been more comfortable."))
+
+(define (EighteenB)
+  (Fancy-speaks-text
+   Nineteen
+   "Alfred, you have the soul of a stockbroker."))
+
+(define (Nineteen)
+  (You-speak-text
+   "I did not run away with you to conduct your correspondence.  I'd hoped "
+   "for something altogether more…"
+   "\n⇒ "
+   `(a (@ (action ,Twenty)) "convivial")
+   "\n⇒ "
+   `(a (@ (action ,Twenty)) "indiscrete")))
+
+(define (Twenty)
+  (Fancy-speaks-text
+   TwentyOne
+   "Then I shall go to my room.  It is quite impossible to finish this "
+   "letter here."))
+
+(define (TwentyOne)
+  (You-speak-text
+   "I suppose I am " `(a (@ (action ,TwentyTwo)) "off to the bar.")))
+
+(define (TwentyTwo)
+  (Fancy-speaks-text
+   TwentyThree
+   "Splendid.  I shall join you, soon"))
+
+(define (In-the-street)
+  (load-image-file "street1.png" VRAM_A)
+  (bg-setup BG_4 VRAM_A))
+
+(define (TwentyThree)
+  (Fancy-leaves)
+  (In-the-street)
+  (wait-on-click-text '(markup (i "In the street…"))
+		      TwentyFour))
+
+(define (Dan-speaks-text proc . text)
+  (Dan-speaks)
+  (wait-on-click-text
+   (append
+    (list 'markup
+	  (list 'i "Dan:")
+	  "\n\t")
+    text)
+   proc
+   #:y 50 #:x 70 #:width 500 #:fade-time 0.1))
+
+(define (TwentyFour)
+  (Dan-enters-center)
+  (Dan-speaks-text
+   TwentyFive
+   "Alfred.  Imagine the serendipity of our crossing."))
+
+(define (TwentyFive)
+  (You-speak-text
+   "[Oh heavens.  It is "
+   `(a (@ (action ,TwentySix)) "Dan")
+   "]"))
+
+(define (TwentySix)
+  (let ((i (random 3)))
+    (log-info "joke ~a" i)
+    (cond
+     ((= i 0)
+      (Dan-speaks-text
+       TwentySevenA
+       "Why is a dog like a tree?"))
+      ((= i 1)
+       (Dan-speaks-text
+	TwentySevenB
+	"A customer in a restaurant says 《Waiter, there is a button in my "
+	"salad.》"))
+      ((= i 2)
+       (Dan-speaks-text
+	TwentySevenC
+	"Who is the greatest chicken killer in Shakespeare?")))))
+
+(define (TwentySevenA)
+  (You-speak-text
+   `(a (@ (action ,TwentyEightA))
+       "Why?")))
+
+(define (TwentyEightA)
+  (Dan-speaks-text
+   TwentyNine
+   "Because they both lose their bark once they're dead. "
+   "\nHAHAHAHAHA"))
+
+(define (TwentySevenB)
+  (You-speak-text
+   `(a (@ (action ,TwentyEightB))
+       "And..")))
+
+(define (TwentyEightB)
+  (Dan-speaks-text
+   TwentyNine
+   "The waiter says 《That's all right, sir.  It is part of the "
+   "dressing.》 "
+   "\nHAHAHAHAHA"))
+
+(define (TwentySevenC)
+  (You-speak-text
+   `(a (@ (action ,TwentyEightC))
+       "Who?")))
+
+(define (TwentyEightC)
+  (Dan-speaks-text
+   TwentyNine
+     "Macbeth, because he did murder most foul. "
+     "\nHAHAHAHAHA"))
+
+(define (TwentyNine)
+  (You-speak-text
+   "Oh yes.  Most humourous.\nSorry. "
+   `(a (@ (action ,Thirty))
+       "I really mustn't dally.")))
+
+(define (In-the-bar)
+  (load-image-file "room.png" VRAM_A)
+  (bg-setup BG_4 VRAM_A))
+
+(define (Thirty)
+  (Dan-leaves)
+  (In-the-bar)
+  (wait-on-click-text '(markup (i "In the bar…"))
+		      ThirtyOne))
+
+(define (ThirtyOne)
+  (Ethelbert-enters-center)
+  (Ethelbert-speaks-text
+   ThirtyTwo
+   "Alfred! How singular that we should meet!"))
+
+(define (ThirtyTwo)
+  (You-speak-text
+   "Ethelbert! My dear fellow.  What brings you here?  I understood "
+   "you were "
+   `(a (@ (action ,ThirtyThree)) "travelling on business.")))
+
+(define (ThirtyThree)
+  (Ethelbert-speaks-text
+   ThirtyFour
+   "So I am.  Extremely private business. "
+   "\nCome, let us talk. "
+   "\nAre you here on business, too?"))
+
+(define (ThirtyFour)
+  (You-speak-text
+   "Er — "
+   "\n⇒ "
+   `(a (@ (action ,ThirtyFive)) "Extremely private business also.")
+   "\n⇒ "
+   `(a (@ (action ,ThirtyFive)) "Pleasure, one might say.")))
+
+(define (ThirtyFive)
+  (Ethelbert-speaks-text
+   ThirtySix
+   "Just so.  Look, chap, I want to talk to you about Fancy."))
+
+(define (ThirtySix)
+  (You-speak-text
+   "\n⇒ "
+   `(a (@ (action ,ThirtySevenA)) "I feel I ought to be getting to bed.")
+   "\n⇒ "
+   `(a (@ (action ,ThirtySevenB)) "This is such a dull place.  We should go.")))
+
+(define (ThirtySevenA)
+  (Ethelbert-speaks-text
+   ThirtyEight
+   "Bed?  It is only half-past ten, and I want to ask you your advice."))
+
+(define (ThirtySevenB)
+  (Ethelbert-speaks-text
+   ThirtyEight
+   "Then it is all the better, for there are no distractions. "
+   "I want to ask you your advice."))
+
+(define (ThirtyEight)
+  (You-speak-text
+   "\n⇒ "
+   `(a (@ (action ,ThirtyNine))
+       "I promised my mother, before she died, that whenever practicable I would be in bed by half-past ten.")
+   "\n⇒ "
+   `(a (@ (action ,ThirtyNine)) "Do you thing you ought to talk to be about your relations?  They should be sacred, surely.")))
+
+(define (ThirtyNine)
+  (Ethelbert-speaks-text
+   Forty
+   "Why does a woman grow tired of a man?  I know that Fancy prefers somebody else."))
+
+
+(define (Forty)
+  (You-speak-text
+   "You suspect that Fancy is in love with someone else?"
+   "\n⇒ "
+   `(a (@ (action ,FortyOneA))
+       "Who is he?")
+   "\n⇒ "
+   `(a (@ (action ,FortyOneB)) "Don't you think you will be much happier if you remain in ignorance?")))
+
+(define (FortyOneA)
+  (Ethelbert-speaks-text
+   FortyTwo
+   "I have no idea.  I wish I had. For I should like to warn him."))
+
+(define (FortyOneB)
+  (Ethelbert-speaks-text
+   FortyTwo
+   "Oh, I am not thinking of myself.  I am thinking of him.  "
+   "I should like to warn him."))
+
+(define (FortyTwo)
+  (You-speak-text
+   `(a (@ (action ,FortyThree)) "To warn him?")))
+
+(define (FortyThree)
+  (Ethelbert-speaks-text
+   FortyFour
+   "Fancy is so terribly extravagant.  She spends money like water, "
+   "especially when it is not her own.  Candidly, I'm afraid Fancy will "
+   "ruin her new fellow.  I would not willingly wish my worst enemy "
+   "be reduced to the poor house by her excesses."))
+
+(define (FortyFour)
+  (You-speak-text
+   "Are you looking at this alleged affair the proper way? Shouldn't you "
+   "be feeling…"
+   "\n⇒ "
+   `(a (@ (action ,FortyFiveA))
+       "indignant at the idea of another man eloping with your wife?")
+   "\n⇒ "
+   `(a (@ (action ,FortyFiveB)) "ashamed that you are without any sense of responsibility?")))
+
+(define (FortyFiveA)
+  (Ethelbert-speaks-text
+   FortySix
+   "Not in the least.  When I married Fancy we arranged to leave each other "
+   "absolutely free.  I am a gentleman, and shall not break my word. "
+   "Never be a hypocrite.  It is an excellent maxim."))
+
+(define (FortyFiveB)
+  (Ethelbert-speaks-text
+   FortySix
+   "Believe me, Alfred, it is a mistake to have too many principles.  If you "
+   "have too many, the are impossible to stick to.  I content myself with "
+   "avoiding hypocrisy."))
+
+(define (FortySix)
+  (You-speak-text
+   "Ethelbert, your deplorable views about morality have awakened my conscience. "
+   "I knew, all that time, that Fancy was in love with "
+   `(a (@ (action ,FortySeven)) "another.")))
+
+(define (FortySeven)
+  (Ethelbert-speaks-text
+   FortyEight
+   "How?  Are you saying that you are that man?"))
+
+(define (FortyEight)
+  (You-speak-text
+   "Well "
+   "\n⇒ "
+   `(a (@ (action ,AdmitOne))
+       "Yes, it is me.")
+   "\n⇒ "
+   `(a (@ (action ,DenyOne))
+       "Not, not me, but…")))
+
+(define (DenyOne)
+  (Ethelbert-speaks-text
+   DenyTwo
+   "No matter. I shall know in due course.  I have spied her just today. "
+   "She has had the indecency to stay at the very hotel in which I am "
+   "staying."))
+
+(define (DenyTwo)
+  (You-speak-text
+   "How could she have known you were staying there?  We thought you "
+   "were in "
+   `(a (@ (action ,DenyThree))
+       "Scotland.")))
+
+(define (DenyThree)
+  (Ethelbert-speaks-text
+   DenyFour
+   "Ah, true.  I did go to Scotland.  I spoke without reflecting.\n"))
+
+(define (DenyFour)
+  (Ethelbert-enters-left)
+  (Fancy-enters-right)
+  (Fancy-speaks-text
+   DenyFive
+   "Ethelbert!"))
+
+(define (DenyFive)
+  (Ethelbert-speaks-text
+   DenySix
+   "Fancy!"))
+
+(define (DenySix)
+  (Fancy-speaks-text
+   DenySeven
+   "How fortunate!  I can give you this letter now.  It will save me a "
+   "penny stamp."))
+
+(define (DenySeven)
+  (Ethelbert-speaks-text
+   Sixty
+   "And an interesting letter it is.  Well Alfred, far be it from me to "
+   "try to induce you to act contrary to your conscience."))
+
+(define (AdmitOne)
+  (Ethelbert-speaks-text
+   AdmitTwo
+   "You don't say so!  Permit me to offer you my sincere condolences. "
+   "How fortunate that I should be able to instruct you before it is too late!"))
+
+(define (AdmitTwo)
+  (You-speak-text
+   `(a (@ (action ,AdmitThree))
+       "Instruct me?")))
+
+(define (AdmitThree)
+  (Ethelbert-speaks-text
+   AdmitFour
+   "If you are going to succeed in managing Fancy, you will have to put "
+   "your foot down at once."
+   "\nHow much have you spent today?"))
+
+(define (AdmitFour)
+  (You-speak-text
+   "I shouldn't think that one's love needs to be " '(i "managed") "."
+   "\n⇒ "
+   `(a (@ (action ,AdmitFiveA))
+       "And, I prefer not to say how much I spend.")
+   "\n⇒ "
+   `(a (@ (action ,AdmitFiveB))
+       "About seven hundred and fifty pounds.  Fancy bought a motor car today.")))
+
+(define (AdmitFiveA)
+  (Ethelbert-speaks-text
+   AdmitSix
+   "Last month, I placed an advertisement in the papers that I should not "
+   "be resposible for any debts contracted by my wife."))
+
+(define (AdmitFiveB)
+  (Ethelbert-speaks-text
+   AdmitSix
+   "I thought so.  She may buy another to-morrow."))
+
+(define (AdmitSix)
+  (You-speak-text
+   "Did you succeed in taming her "
+   `(a (@ (action ,AdmitSeven)) "extravagance?")))
+
+(define (AdmitSeven)
+  (Ethelbert-speaks-text
+   AdmitEight
+   "The truth of the matter is…"))
+
+(define (AdmitEight)
+  (Ethelbert-enters-left)
+  (Fancy-enters-right)
+  (Fancy-speaks-text
+   AdmitNine
+   "Ethelbert!"))
+
+(define (AdmitNine)
+  (Ethelbert-speaks-text
+   AdmitTen
+   "Fancy!"))
+
+(define (AdmitTen)
+  (Fancy-speaks-text
+   AdmitEleven
+   "How fortunate!  I can give you this letter now.  It will save me a "
+   "penny stamp."))
+
+(define (AdmitEleven)
+  (Ethelbert-speaks-text
+   Sixty
+   "There is no need.  I feel that I can already deduce its contents."))
+
+
+(define (Sixty)
+  (Fancy-speaks-text
+   SixtyOne
+   "Ethelbert, may I ask what you are doing here?  I is grossly indelicate "
+   "of you to follow me about like this.  You wouldn't like it yourself."))
+
+(define (SixtyOne)
+  (Ethelbert-speaks-text
+   SixtyTwo
+   "It is only coincidence that I find myself here with Albert.  How can "
+   "I tell you.  The reason I am here… Her name is Delia."))
+
+(define (SixtyTwo)
+  (Fancy-speaks-text
+   SixtyThree
+   "Oh! Ethelbert, how dare you?  It is bad taste to prefer another woman to "
+   "me.  I shan't forgive you.  Tell me nothing of her.  Where did you meet her?"))
+
+(define (SixtyThree)
+  (Ethelbert-speaks-text
+   SixtyFour
+   "She was staying at my hotel in Edinburgh."))
+
+(define (SixtyFour)
+  (Fancy-speaks-text
+   SixtyFive
+   "There was no reason why you should have spoken to her."))
+
+(define (SixtyFive)
+  (Ethelbert-speaks-text
+   SixtySix
+   "I didn't.  She spoke to me.  We were sitting at adjoining tables in the "
+   "Winter Garden.  She dropped her handkerchief, and naturally I picked it up."))
+
+(define (SixtySix)
+  (Fancy-speaks-text
+   SixtySeven
+   "And what did she say to you?"))
+
+(define (SixtySeven)
+  (Ethelbert-speaks-text
+   SixtyEight
+   "She said,  《Do you know, you've got the most delightfully wicked eyes.》"
+   " That is how it began."))
+
+(define (SixtyEight)
+  (Delia-enters-center)
+  (Delia-speaks-text
+   SixtyNine
+   "Really, Bertie, this is too bad.  I've been looking for you all over the "
+   "hotel."))
+
+(define (SixtyNine)
+  (You-speak-text
+   `(a (@ (action ,Seventy))
+       "I presume this is the woman in question.")))
+
+(define (Seventy)
+  (Ethelbert-speaks-text
+   SeventyOne
+   "My dear Delia, these are acquaintances of mine: my wife, and Albert."))
+
+(define (SeventyOne)
+  (You-speak-text
+   "\n⇒ "
+   `(a (@ (action ,SeventyTwo))
+       "She is also my love.")
+   "\n⇒ "
+   `(a (@ (action ,SeventyTwo))
+       "[Stay silent]")))
+
+(define (SeventyTwo)
+  (Delia-speaks-text
+   SeventyThree
+   "I am very glad to meet you, if only to have the opportunity of "
+   "complaining about the way you have trained your husband.  Both his "
+   "table manners and his breakfast conversation are quite unbearable."))
+
+(define (SeventyThree)
+  (Fancy-speaks-text
+   SeventyFour
+   "I like his breakfast conversation because he goes on talking without "
+   "stopping.  Consequently, I need not pay attention, and can read the "
+   "morning paper in peace."))
+
+(define (SeventyFour)
+  (Ethelbert-speaks-text
+   SeventyFive
+   "That is most unkind of you both.  My light breakfast conversation has "
+   "been much admired."))
+
+(define (SeventyFive)
+  (You-speak-text
+   `(a (@ (action ,SeventySix))
+       "Does no one care about the quality of my breafast conversation?")))
+
+(define (SeventySix)
+  (Delia-speaks-text
+   SeventySeven
+   "Good-bye, Bertie.  I shall never listen to you breakfast conversation "
+   "again."))
+
+(define (SeventySeven)
+  (Fancy-speaks-text
+   SeventyEight
+   "And good-bye, Alfred.  My only regret is that I shall never know the "
+   "quality of your breakfast conversation."))
+
+(define (SeventyEight)
+  (Fancy-leaves)
+  (Ethelbert-speaks-text
+   SeventyNine
+   "Good night, Alfred."))
+
+(define (SeventyNine)
+  (Ethelbert-leaves)
+  (Delia-speaks-text
+   Eighty
+   "Well.  What do we do now?"))
+
+(define (Eighty)
+  (You-speak-text
+   "\n⇒ "
+   `(a (@ (action ,EightyOne))
+       "I should go see if I can get a return on the expense of the hotel.")
+   "\n⇒ "
+   `(a (@ (action ,EightyOne))
+       "Would you like some champagne?")))
+
+(define (EightyOne)
+  (Delia-speaks-text
+   Fin1
+   "You know, you've got the most delightfully wicked eyes."))
+
+(define (Fin1)
+  (Delia-leaves)
+  (set-backdrop "ghost white")
+  (set-font-color "dark slate gray")
+  (timed-text
+   `(markup
+     (big (b "CURTAIN\nand\nAPPLAUSE")))
+   Fin2
+   #:time-limit 500 #:y (/ (canvas-height) 2) #:x (/ (canvas-width) 2)))
+
+(define (Fin2)
+  (stop))
+
+(One)

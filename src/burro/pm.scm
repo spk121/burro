@@ -49,6 +49,7 @@
 
 
 (define (pm-set-mouse-click x y)
+  ;; (log-info "in pm-set-mouse-click ~a ~a" x y)
   (set! *pm-mouse-click* (list x y)))
 (define (pm-has-mouse-click?)
   (if *pm-mouse-click* #t #f))
@@ -137,6 +138,7 @@
 		 PROCESS_FLAG_MOUSE_CLICK)
     (if (pm-has-mouse-click?)
 	(begin
+	  ;; (log-info "delivering mouse clock to process")
 	  (var-set! process 'mouse-click (pm-get-mouse-click)))
 	(var-set! process 'mouse-click #f)))
   (when (logtest (get-process-flags process)
