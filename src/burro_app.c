@@ -118,7 +118,8 @@ burro_app_activate (GApplication *app)
     BurroAppWindow *win;
 
     win = burro_app_window_new (BURRO_APP (app));
-    burro_app_window_open (win, NULL);
+    GFile *f = g_file_new_for_path("share/burro-engine/game.burro");
+    burro_app_window_open (win, f);
     gtk_window_present (GTK_WINDOW (win));
 }
 

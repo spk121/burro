@@ -35,16 +35,16 @@ main (int argc, char *argv[])
     // Set up the path to where on-the-fly compilation gets saved.
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
-    if (argc < 2)
-    {
-        // FIXME: memleak
-        _argv = malloc(sizeof(char *) * 2);
-        _argv[0] = g_strdup(argv[0]);
-        char *d = g_path_get_dirname (argv[0]);
-        _argv[1] = g_build_filename(d,
-                                    "share\\burro-engine\\game.burro",
-                                    NULL);
-    }
+    /* if (argc < 2) */
+    /* { */
+    /*     // FIXME: memleak */
+    /*     _argv = malloc(sizeof(char *) * 2); */
+    /*     _argv[0] = g_strdup(argv[0]); */
+    /*     char *d = g_path_get_dirname (argv[0]); */
+    /*     _argv[1] = g_build_filename(d, */
+    /*                                 "share\\burro-engine\\game.burro", */
+    /*                                 NULL); */
+    /* } */
 #else
     // Set up a relative path to Guile's own scheme sources,
     // and our site directory sources.
@@ -58,13 +58,13 @@ main (int argc, char *argv[])
     // Set up the path to where on-the-fly compilation gets saved.
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
-    if (argc < 2)
-    {
-        // FIXME: memleak
-        _argv = malloc(sizeof(char *) * 2);
-        _argv[0] = g_strdup(argv[0]);
-        _argv[1] = g_strdup("share/burro-engine/game.burro");
-    }
+    /* if (argc < 2) */
+    /* { */
+    /*     // FIXME: memleak */
+    /*     _argv = malloc(sizeof(char *) * 2); */
+    /*     _argv[0] = g_strdup(argv[0]); */
+    /*     _argv[1] = g_strdup("share/burro-engine/game.burro"); */
+    /* } */
 #endif
 #endif
     printf("Compiling scheme files\n");
@@ -73,9 +73,9 @@ main (int argc, char *argv[])
 
     g_log_set_writer_func (burro_journal_writer, NULL, NULL);
 
-    if (argc < 2)
-        return g_application_run (G_APPLICATION (burro_app_new ()), 2, _argv);
-    else
+    /* if (argc < 2) */
+    /*     return g_application_run (G_APPLICATION (burro_app_new ()), 2, _argv); */
+    /* else */
         return g_application_run (G_APPLICATION (burro_app_new ()), argc, argv);
 }
 
