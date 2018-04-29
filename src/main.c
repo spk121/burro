@@ -41,7 +41,9 @@ main (int argc, char *argv[])
         _argv = malloc(sizeof(char *) * 2);
         _argv[0] = g_strdup(argv[0]);
         char *d = g_path_get_dirname (argv[0]);
-        _argv[1] = g_build_filename(d, "share\\burro-engine\\game.burro");
+        _argv[1] = g_build_filename(d,
+                                    "share\\burro-engine\\game.burro",
+                                    NULL);
     }
 #else
     // Set up a relative path to Guile's own scheme sources,
