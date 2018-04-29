@@ -395,7 +395,7 @@ game_loop (gpointer user_data)
                 }
                 if (win->have_mouse_click_event)
                 {
-                    g_message("sending mouse click to pm, %f %f", win->mouse_click_x, win->mouse_click_y);
+                    // g_message("sending mouse click to pm, %f %f", win->mouse_click_x, win->mouse_click_y);
                     scm_c_catch (SCM_BOOL_T,
                                  call_pm_set_mouse_click, win,
                                  default_error_handler,

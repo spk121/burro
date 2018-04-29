@@ -3,6 +3,9 @@
 * Engine
 ** DONE Audio file unpacking
    Went with vorbisfile.
+** Windows audio support with CoreAudio
+** Window resizing support
+** OpenBSD audio support with the openbsd sound server
 ** DONE Put pulseaudio loop in game loop
    So pause works and duty cycle works.
 ** TODO Better directory and game loading handling
@@ -19,6 +22,7 @@
 ** DONE Guile port handling
 ** TODO The big BG rewrite
    BG is a mess.
+** Avoid Sandbox?  It isn't helping
 ** Sandbox Debugger
 *** Recheck the entry points so that the debugger is only for sandbox
 *** Make the debugger its own window
@@ -26,6 +30,7 @@
 *** Audio properties
 *** Textbox properties and action hotspots
 *** Watch
+*** Hard crash in MinGW
 ** Make pretty
 ** Wisp support
 ** VRAM stability
@@ -46,3 +51,4 @@
 * Game
 ** Prototype game in Twine
 ** Convert to Burro
+   

@@ -118,7 +118,7 @@ libburrocanvas_la_CFLAGS = \
 libburrocanvas_la_LDFLAGS = -no-undefined -Wl,--no-undefined
 libburrocanvas_la_LIBADD = $(GTK3_LIBS) $(GUILE_LIBS) $(VORBISFILE_LIBS) $(LIBPULSE_LIBS) -lm
 
-snarfcppopts = $(DEFS) $(GTK3_CFLAGS) $(GUILE_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS)
+snarfcppopts = $(DEFS) $(GTK3_CFLAGS) $(GUILE_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(AM_CFLAGS) -I$(srcdir)/..
 
 SUFFIXES = .x
 
