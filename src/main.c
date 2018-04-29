@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 #include <locale.h>
 #include <libguile.h>
+#include <stdio.h>
 #include "burro_app.h"
 #include "burro_journal.h"
 #include "canvas.h"
@@ -56,8 +57,9 @@ main (int argc, char *argv[])
         _argv[1] = g_strdup("share/burro-engine/game.burro");
     }
 #endif
-    
+    printf("Compiling scheme files\n");
     scm_init_guile ();
+    printf("Scheme file compilation complete.\n");
 
     g_log_set_writer_func (burro_journal_writer, NULL, NULL);
 
