@@ -40,7 +40,8 @@ main (int argc, char *argv[])
         // FIXME: memleak
         _argv = malloc(sizeof(char *) * 2);
         _argv[0] = g_strdup(argv[0]);
-        _argv[1] = g_strdup("share\\burro-engine\\game.burro");
+        char *d = g_path_get_dirname (argv[0]);
+        _argv[1] = g_build_filename(d, "share\\burro-engine\\game.burro");
     }
 #else
     // Set up a relative path to Guile's own scheme sources,
