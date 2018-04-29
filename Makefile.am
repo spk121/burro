@@ -9,4 +9,5 @@ MAINTAINERCLEANFILES = \
  $(srcdir)/test-driver
 
 EXTRA_DIST = \
- bootstrap.sh
+ bootstrap.sh \
+ run-uninstalled.sh 
