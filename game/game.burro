@@ -12,9 +12,9 @@
 
 (define (Two)
   (set-backdrop "AntiqueWhite3")
-  (load-image-file "bike1.png" VRAM_A)
+  (load-image-file "streetcars.png" VRAM_A)
   (bg-setup BG_1 VRAM_A)
-  ;;(bg-set-brightness 0.4)
+  (set-font-color "brown")
   (timed-text
    '(markup "A Lonely Cactus Production")
    Three
@@ -22,6 +22,7 @@
 
 (define (Three)
   (bg-reset BG_1)
+  (set-font-color "dark slate gray")
   (timed-text
    `(markup
      (span (@ (font "Serif") (variant "smallcaps"))
