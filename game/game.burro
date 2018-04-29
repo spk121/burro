@@ -221,7 +221,7 @@
   )
 
 (define (setup-speech-text bgcolor)
-  (set-font "Serif 16")
+  (set-font "Serif 14")
   (set-markup-bgcolor bgcolor 0.8)
   (set-font-color "alice blue"))
 
@@ -241,7 +241,7 @@
      "\n\tWe begin in the library of the hotel. "
      "\nYou call out to a beautiful woman named 'Fancy'.\n"
      (a (@ (action ,SixB)) "Oh, Fancy!"))
-   #:y 30 #:x 70 #:width 500 #:fade-time 0))
+   #:y 0 #:x 0 #:width 500 #:height 800 #:fade-time 0))
 
 (define (SixB)
   (Fancy-enters-center)
@@ -255,14 +255,11 @@
 
 
 (define (Seven)
-  (Fancy-speaks)
-  (wait-on-click-text
-   `(markup
-     (i "Fancy:")
+  (Fancy-speaks-text
+	Eight
+     '(i "Fancy:")
      "\n\tThen I have still and hour and three-quarters in which to "
-     "finish the letter.  This is no ordinary letter.")
-   Eight
-   #:y 330 #:x 70 #:width 500 #:fade-time 0))
+     "finish the letter.  This is no ordinary letter."))
 
 (define (Eight)
   (You-speak)
