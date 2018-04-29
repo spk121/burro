@@ -9,6 +9,8 @@
 int
 main (int argc, char *argv[])
 {
+
+    char **_argv;
     // This might quiet DBUS errors about Error retrieving
     // accessibility bus address
     g_setenv("NO_AT_BRIDGE", "1", FALSE);
@@ -46,13 +48,23 @@ main (int argc, char *argv[])
     // ('guile/ccache/VERSION' gets appended to this directory)
     g_setenv("XDG_CACHE_HOME", "lib", TRUE);
 #endif
+    if (argc < 2)
+    {
+        // FIXME: memleak
+        _argv = malloc(sizeof(char *) * 2);
+        _argv[0] = g_strdup(argv[0]);
+        _argv[1] = g_strdup("share/burro-engine/game.burro");
+    }
 #endif
     
     scm_init_guile ();
 
     g_log_set_writer_func (burro_journal_writer, NULL, NULL);
-    
-    return g_application_run (G_APPLICATION (burro_app_new ()), argc, argv);
+
+    if (argc < 2)
+        return g_application_run (G_APPLICATION (burro_app_new ()), 2, _argv);
+    else
+        return g_application_run (G_APPLICATION (burro_app_new ()), argc, argv);
 }
 
 
