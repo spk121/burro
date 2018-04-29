@@ -174,6 +174,7 @@ general errors."
   "Read expressions from a file and evaluate them in SANDBOX.  If an
 error occurs, a string is returned with a description of the problem."
   (let ((port (string-if-exception (open-input-file filename))))
+    (set-port-encoding! port "UTF-8")
     (if (string? port)
 	port
 	;; else

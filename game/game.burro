@@ -230,6 +230,19 @@
 
 (define (Six)
   (In-the-library)
+  (You-speak)
+  (clickable-text
+   `(markup
+     (i "You:")
+     "Dear reader\n"
+     "If there are underlined links, click on one with your mouse.\n"
+     "If there are no underlined links, click anywhere with the mouse to continue.\n"
+     "\n\tWe begin in the library of the hotel. "
+     "\nYou call out to a beautiful woman named 'Fancy'.\n"
+     (a (@ (action ,SixB)) "Oh, Fancy!"))
+   #:y 30 #:x 70 #:width 500 #:fade-time 0))
+
+(define (SixB)
   (Fancy-enters-center)
   (You-speak)
   (clickable-text
@@ -324,7 +337,7 @@
        "You will be glad to hear that we are having an awfully jolly time here.")
    "\n⇒ "
    `(a (@ (action ,SixteenC))
-       "The " (i "Cosmopolitan") " is an exceedingly nice hotel, with modern conveniences.")))
+       "The Cosmopolitan is an exceedingly nice hotel, with modern conveniences.")))
 
 (define (SixteenA)
   (Fancy-speaks-text
