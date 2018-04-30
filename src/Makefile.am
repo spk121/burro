@@ -108,7 +108,7 @@ burro_engine_DEPENDENCIES = libburrocanvas.la
 
 libburrocanvas_la_CFLAGS = \
   -std=c11 \
-  -fvisibility=hidden \
+  -fvisibility=default \
   -DG_LOG_USE_STRUCTURED \
   -DG_LOG_DOMAIN=\"burro-canvas\" \
   $(GTK3_CFLAGS) \
